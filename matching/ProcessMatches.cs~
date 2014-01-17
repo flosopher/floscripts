@@ -1,0 +1,23 @@
+
+#log file to keep track of how to treat matches, after backing up issues are dealt with
+
+#first superimpose
+~flo/scripts/matching/do_superimpose.pl ${scaf}_NE2_list ../subens/Sublist_esterase
+
+#then check for uniqueness, write out redundant matches
+~wollacott/py_scripts/tools/uniqueMatches.py -P SubMatchPaths.txt -f 0.002 --heavy_atom_only -r -i > RedunMatches.txt
+
+file submatchpaths is written by do_superimpose.pl, contains all matches
+
+then remove the redundant matches
+~/scripts/matching/RemoveRedundantMatches.pl RedunMatches.txt SubMatchPaths.txt > UniMatches.txt
+
+then remove backbone clashes
+ ~/scripts/matching/CheckHetBBClashes.pl -c 2.8 -l 1abe_UniMatches.txt > 1abe_NcMatches.txt
+
+
+
+~wollacott/py_scripts/tools/fixHisMatch.py -P UniMatches.txt -r
+
+then check the h-bond strength
+~wollacott/py_scripts/tools/checkHbonds.py -P UniMatches.txt -s "cat=1,4" -x 0 > HbondStrengths

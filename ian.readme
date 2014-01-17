@@ -1,0 +1,56 @@
+no way and this be the mac copy
+
+README files for docking procedures on the Kemp reaction
+Author: Florian Richter, Dec. 2006, flosopher@gmail.com
+
+
+1. Command line for rosetta ligand docking
+
+if docking is done with rosetta_svn version
+
+'rosettag.gcc sp 1pro _ -dock -use_input_sc -ligand -dock_mcm -nstruct 1500 -dock_pert 3.0 3.0 75 -ex1 -ex1aro -ex2 -output_input_pdb -l startstructslist -fa_input -fa_output -read_all_chains -try_both_his_tautomers'
+
+when flexible ligand running: -flexible_ligand -ligand_mdlfile $file
+
+#general options in command line, work with all modes
+-use_input_sc
+-ex1 -ex1aro -ex2 -ex2aro  increase rotamer library
+-l starting structure list
+-s starting structure
+-try_both_his_tautomers
+-read_all_chains 
+
+probably
+-fa_input full atom mode 
+-fa_output outputs full pdb coords
+
+#docking options
+-dock: tells it to go into dock mode
+-ligand: switches ligand on
+
+three dock parameters: -dock_min -dock_mcm -dock_pert
+dock_min: does rigid body minimization of ligand
+dock_mcm: does monte carlo moves with ligand. when converges, does dock_min 
+dock_pert num1 num2 num3
+
+if dock_pert: at the start of each run, the ligand gets perturbed randomly to a new position. at that position, a dock_mcm protocol is called.
+num1: ligand gets perturbed a random 0<distance<num1 on the axis connecting ligand and protein centers of mass 
+num2: ligand gets perturbed a random 0<distance<num2 in the plane perpendicular to the first perturbation axis and intersecting it at the first perturbation point
+num3: ligand gets rotated a random 0<ang<num3
+
+first two strings, i.e. 'sp 1pro _' : heritage  
+
+
+
+the first 2 parameters (sp 1pro) are naming options, i.e. their values will appear in the output files. the third parameter ( _ ) means that all chains of the protein are considered. 
+the three '-dock_pert' parameters mean the following: the first value is the maximum angstrom value that the ligand is moved (perturbed) along the docking normal, it will be moved a random distance between 0 and the given value. the second parameter is the maximum distance that the ligand is moved in the docking parallel from the initial perturbed position along the docking normal. the third parameter is the maximum number of degrees the ligand is rotated in its final perturbed position.
+
+for the kemp ligand and with 3.0 3.0 75 as -dock_pert parameters, producing 1000-1500 decoys should give enough sampling. if larger values are used, the value for '-nstruct' should be increased correspondingly.
+it is hard to guess what a suffiecient number of decoys is for any given system and dock_pert parameters, one possible strategy to get a clue about this is to generate an extremely huge amount of decoys for one test system and then look at how many decoys are at least necessary to make the scatter plot qualitatively resemble the plot of all decoys. 
+
+
+
+
+
+
+

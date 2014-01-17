@@ -1,0 +1,26 @@
+#file that determines which atoms of the esterase tyrosin umbilleferone substrate (nucleophilic attack) belong to which moiety
+#there are 22 heavyatoms in the ligand
+# moiety A = hydrophobic phenyl group plus reaction center that is to be buried
+# moiety B = leaving group that should point out of the binding pocket
+ATOM    1   A
+ATOM    2   A
+ATOM    3   A
+ATOM    4   A
+ATOM    5   A
+ATOM    6   A
+ATOM    7   A
+ATOM    8   A
+ATOM    9   A
+ATOM   10   B
+ATOM   11   B
+ATOM   12   B
+ATOM   13   B
+ATOM   14   B
+ATOM   15   B
+ATOM   16   B
+ATOM   17   B
+ATOM   18   B
+ATOM   19   A
+ATOM   20   A
+ATOM   21   B
+ATOM   22   B

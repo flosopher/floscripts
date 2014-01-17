@@ -1,0 +1,77 @@
+README files for docking procedures on the Kemp reaction
+Author: Florian Richter, Dec. 2006, flosopher@gmail.com
+
+
+1. Command line for rosetta ligand docking
+
+if docking is done with rosetta_svn version
+
+'rosettag.gcc sp 1pro _ -dock -use_input_sc -ligand -dock_mcm -nstruct 1500 -dock_pert 3.0 3.0 75 -ex1 -ex1aro -ex2 -output_input_pdb -l startstructslist -fa_input -fa_output -read_all_chains -try_both_his_tautomers'
+
+
+
+if the hack version of the Dec. 10, 2006 trunk version of rosetta is used, i.e. if one ligand atom and one protein atom should be excluded, the following command line has to be used:
+
+'rosetta_hack.gcc sp 1pro _ -dock -use_input_sc -ligand -dock_mcm -nstruct 1500 -dock_pert 3.0 3.0 75 -ex1 -ex1aro -ex2 -output_input_pdb -l startstructslist -fa_input -fa_output -read_all_chains -try_both_his_tautomers -flo_exclude -fhid 6 -fresid 101 -fatom OE2'
+
+'-flo_exclude' tells the program to exclude the interaction between the ligand atom that is given after '-fhid' (i.e. in this case the sixth atom of the ligand)and the protein atom of '-fresid' that is named '-fatom', in this case the OE1 atom of residue 101.
+
+
+
+
+the first 2 parameters (sp 1pro) are naming options, i.e. their values will appear in the output files. the third parameter ( _ ) means that all chains of the protein are considered. 
+the three '-dock_pert' parameters mean the following: the first value is the maximum angstrom value that the ligand is moved (perturbed) along the docking normal, it will be moved a random distance between 0 and the given value. the second parameter is the maximum distance that the ligand is moved in the docking parallel from the initial perturbed position along the docking normal. the third parameter is the maximum number of degrees the ligand is rotated in its final perturbed position.
+
+for the kemp ligand and with 3.0 3.0 75 as -dock_pert parameters, producing 1000-1500 decoys should give enough sampling. if larger values are used, the value for '-nstruct' should be increased correspondingly.
+it is hard to guess what a suffiecient number of decoys is for any given system and dock_pert parameters, one possible strategy to get a clue about this is to generate an extremely huge amount of decoys for one test system and then look at how many decoys are at least necessary to make the scatter plot qualitatively resemble the plot of all decoys. 
+
+
+
+
+
+2. analysis of the decoys. 
+
+the decoys were analyzed with respect to two things: the rmsd of the ligand to the designed position vs. lig+total energy  and the 4 catalytic parameters important for the kemp reaction. 
+
+directory structure: for each design, there should be a directory that contains all the decoys. there should also be one directory called 'analysis' on the same level as the design directories. the *.cs scripts have to be called from the directoy above 
+
+For the RMSD/lig energy calculation, 4 scripts are used
+
+CalcRMSDvsE.cs
+This is a simple C-shell script (no input parameters needed) that consists of a foreach loop over each of the designs. within the foreach loop, the script 'dockERMSDget.pl' is called for each decoy.
+
+'dockERMSDget.pl'
+this script needs two input parameters: the designname and the decoyname
+it reads both 'lig_sum' and 'bk_tot' from the decoy file and then uses amw's RMSD script ('/users/wollacott/py_scripts/tools/rms_cur.py') to determine the RMSD of the ligand in the decoy to the ligand in the original designed structure. the position of the designed structure has to be specified in line 73 of the script. It then writes out the decoyname, bk_tot, lig_sum, and the RMSD to STDOUT
+
+after this script was called for each decoy (output redirected to 'tempunordered') , CalcRMSDvsE.cs calls 'ConcatDockRmsdE.pl'.
+
+'ConcatDockRmsdE.pl'
+this script needs the name of the file with the unordered decoy values (tempunordered' in the current implementation) and the designname as input.it reads in the unordered decoy values, sorts them by ligand energy, and then writes them in order to STDOUT.
+
+
+For the Geometry calculations, also 4 scripts are used. however, 2 versions of these scripts exist: the normal one and the 'amw_', the difference being that the 'amw_' is for designs where the histidine is backed up.
+
+
+'Concat_Cat_Geoms.cs'
+This script is the c-shell script that launches the geometry calculations for each design.there is one caveat: since in the abstracted proton was not present in the docking calculations, it has to be put back into each decoy for the geometry calculations. This is being done using the 'molecule' program. Therefore, 'Concat_Cat_Geoms.cs' first writes a template superpositioning script for the molecule program. (lines 4-13).
+
+For each design, it then executes the script 'DetCloseResidue.pl'. This script reads in the original design pdb file (has to be specified in lines 64 and 76), and then determines which residue acts as the base. It then writes out the name and number of the base residue, the atom that is designed to do the proton abstraction as well as two other atoms that are necessary to calculate angles/dihedrals.
+Note: for 'DetCloseResidue.pl' to work, the C atom in the kemp substrate from which the proton is abstracted has to be of type 'COO' (see line 76)
+NOte: 'DetCloseResidue.pl' can also be used to write a command line for -flo_exclude hack rosetta version. to do this, the input passed to the script has to be '$design cmd'
+
+
+The output of 'DetCloseResidue.pl' is saved in a variable in 'Concat_Cat_Geoms.cs'. 'Concat_Cat_Geoms.cs' then uses molecule (lines 39 to 44) to superposition a TS with the H onto the TS position in each decoy, and then executes the script 'Calc_Decoy_Cat_geom.pl for each decoy.
+
+'Calc_Decoy_Cat_geom.pl' needs the output from 'DetCloseResidue.pl' as input (passed through 'Concat_Cat_Geoms.cs), and reads in the coordinates of the relevant base atoms. It also reads in the coordinates of the substrate H and C atoms, and then calculates the 4 necessary parameters (length substrate:C--base:O, angle substrate:C--substrate:H--base:O, angle substrate:H--base:O--base:C, and the dihedral that determines whether the H is in the plane of the base.
+It also calculates these 4 parameters for the two substrate atoms and the other atom of the base (i.e. OE2 instead of OE1, ND1 instead of NE2).
+Finally, the 8 calculated parameters along with bk_tot and lig_sum for the decoy are given out. 
+NOTE: the dihedral angles do not have the correct sign, only the correct value. in regard to the catalytic geometry, the sign of the dihedral around the base:C--base:O bond is not important, as either 0 or 180 allow catalytic geometry.
+
+NOTE: the amw_ version of this script is more complicated, since 8 backup values are also calculated (2 values, length and angle, for 4 possible backup combinatinos: designed backingup atom to designed backed up atom, designed backingup atom to alternative backed up atom, alternative backingup atom to designed backed up atom, alternative backigup atom to alternative backed up atom) 
+
+Finally, after the catalytic geometry for each decoy has been calculated and written into the file ${design}_CatGeom_unordered.ana, 'Concat_Cat_Geoms.cs' calls 'ConcatDockCatGeomVsE.pl' which reads in the unordered file, sorts the decoys by ligand energy, and writes the result to the file ${design}_CatGeom.ana in the analysis folder.
+
+Finally, the script 'Concat_VirEs.cs' has to be called to determine the fractin of low energy decoys that satisfy the catalytic geometry. the percentageof low energy decoys considered has to be given as input to this script, i.e. 0.01 for the top 1 percent decoys.
+
+

@@ -1,0 +1,14 @@
+README files for docking procedures on the Kemp reaction
+Author: Florian Richter, Dec. 2006, flosopher@gmail.com
+
+
+1. Command line for rosetta ligand docking
+
+if docking is done with rosetta_svn version
+
+'rosettag.gcc sp 1pro _ -dock -use_input_sc -ligand -dock_mcm -nstruct 1500 -dock_pert 3.0 3.0 75 -ex1 -ex1aro -ex2 -output_input_pdb -l startstructslist -fa_input -fa_output -read_all_chains -try_both_his_tautomers'
+
+the first 2 parameters (sp 1pro) are naming options, i.e. their values will appear in the output files. the third parameter ( _ ) means that all chains of the protein are considered. 
+the three '-dock_pert' parameters mean the following: the first value is the maximum angstrom value that the ligand is moved (perturbed) along the docking normal, it will be moved a random distance between 0 and the given value. the second parameter is the maximum distance that the ligand is moved in the docking parallel from the initial perturbed position along the docking normal. the third parameter is the maximum number of degrees the ligand is rotated in its final perturbed position.
+
+for the kemp ligand and with 3.0 3.0 75 as -dock_pert parameters, producing 1000-1500 decoys should give enough sampling. if larger values are used, the value for '-nstruct' should be increased correspondingly.

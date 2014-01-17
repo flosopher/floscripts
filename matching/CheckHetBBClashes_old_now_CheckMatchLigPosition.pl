@@ -1,0 +1,262 @@
+#!/usr/bin/perl
+
+#script to determine whether any backbone atoms in a structure are clashing with HETATMs 
+#same line in the files of the two molecules
+
+
+use Math::Complex;
+
+use strict;
+
+
+#funtion to add two 3dimensional vectors , even though there is other information in the array 
+#!!ATTENTION: the vectors MUST have equal size, and the coordinates MUST be the first three elements of each vector
+sub Add3DVectors {
+    my $VectSize = (scalar @_) / 2;
+    my @ReturnVect = ();
+
+    for(my $element = 0; $element < 3; $element++){
+	$ReturnVect[$element] = $_[$element] + $_[$element + $VectSize];
+    }
+    
+    return @ReturnVect;
+}
+
+#function to substract two vectors, even if there is other information in the array: second vector will be substracted from first given vector
+#!!ATTENTION: the vectors MUST have equal size, and the coordinates MUST be the first three elements of each vector
+sub Substract3DVectors {
+    my $VectSize = (scalar @_) / 2;
+    my @ReturnVect = ();
+
+    for(my $element = 0; $element < 3 ; $element++){
+	$ReturnVect[$element] = $_[$element] - $_[$element + $VectSize];
+	
+    }
+    
+    return @ReturnVect;
+}
+
+sub VectorLength {
+    my $SqSum = 0;
+        
+    foreach my $element (@_) { $SqSum = $SqSum + $element * $element;}
+    return sqrt($SqSum);
+    
+}
+
+
+
+sub ScaffoldName {
+
+    my @ScaffoldList = ("1abe","1gca","1hsl","1wdn","2dri","1ey4","1fkj","1mbt","1oho","1rx8","1sjw","1tsn","1ank","1cbs","1dc9","1ifc","1lic","1nah","1sa8");
+    my $CheckScaf = $_[0];
+    
+    foreach my $item (@ScaffoldList) {
+	if($CheckScaf =~ m/$item/) { return $item;}
+    }
+    return 0;
+}
+
+
+ 
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: -c <min allowed distance> -l <listfile of structures> or -s <struct>\n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+#printf STDERR " $#ARGV \n";
+if($#ARGV < 3) {&usage(); exit 1}
+
+
+my $CutOff = -1;
+my $NativeCutOff = 5.00;
+my $ListOption = 0;
+my $ListFile = -1;
+my $SingStruct = -1;
+my @StructList = ();
+my $CheckNativeLig = 0;
+my $CheckLigNeighbors = 0;
+my $NeighborCutOff = 7.0;
+
+for(my $ii = -1; $ii < $#ARGV;$ii++){
+    if ($ARGV[$ii] eq '-c'){$CutOff = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-l'){$ListOption = 1; $ListFile = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-s'){$SingStruct = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-check_native'){$CheckNativeLig = 1;}
+    if ($ARGV[$ii] eq '-native_cut'){$NativeCutOff = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-lig_neighbors'){$CheckLigNeighbors = 1;}
+}
+
+if($CutOff <= 0){printf STDERR "Error: have to give a cutoff value bigger than 0\n"; &usage(); exit 1;}
+
+my $NumStruct = 0;
+my $Scaf = 'X';
+
+if($ListOption){
+
+    open(LISTFILE, $ListFile) || die "Could not open $ListFile\n";
+    @StructList = <LISTFILE>;
+    close LISTFILE;
+    $NumStruct = scalar @StructList;
+    $Scaf = substr($ListFile,0,4);
+    printf STDERR "Performing clash check for list of structures $ListFile containing $NumStruct $Scaf structures..\n";
+}
+
+else {
+    $StructList[0] = $SingStruct;
+    $NumStruct =1;
+    printf STDERR "Performing clash check for single structure $SingStruct ..\n";
+    $ListFile = $SingStruct;
+}
+
+#input read in, now analyze structures
+
+my @ClashingStructs = ();
+my @NoClashStructs = ();
+
+
+for(my $ii = 0; $ii < $NumStruct; $ii ++){
+    
+    my $CurStruct = $StructList[$ii];
+    chomp($CurStruct);
+    
+
+    my $CurClash = 0;
+    my @BBAtoms = ();
+    my @CbCoords = ();    #array to save all the Cb coordinates for neighbor analysis
+    my @HetAtoms = ();
+    my @NativeLigAtoms = ();
+    my $NumNativeLigAtoms = 0;
+    my $CurScaf = 0;
+
+    my $NumAtomsWithinNative = 0;
+    
+    if(-e $CurStruct) {
+	open(CURFILE, $CurStruct);
+
+	while(<CURFILE>) {
+	    my $inline = $_;
+    
+	    
+	    if(($inline =~ /^ATOM/ )){
+		my $CurAt = substr($inline,12,4);
+		if( $CurAt eq ' N  ' || $CurAt eq ' CA ' || $CurAt eq ' C  ' || $CurAt eq ' O  ' ) {
+		    my @CurAtPos = ((substr($inline,31,7))/1, (substr($inline,39,7))/1, (substr($inline,47,7))/1,substr($inline,7,9)  );
+		    push(@BBAtoms,[@CurAtPos]);
+		   
+		}
+
+		if ( $CheckLigNeighbors && ( ($CurAt eq ' CB ') || ( (substr($inline,17,3) eq 'GLY') && ($CurAt eq ' CA ') ) ) ){
+		    my @CurNeighAtPos = ((substr($inline,31,7))/1, (substr($inline,39,7))/1, (substr($inline,47,7))/1,"-"  ); #the last element, intialized as -, keeps track of whether this residue neighbors the ligand, and if so, which parts
+		    push(@CbCoords, [@CurNeighAtPos]);
+		    printf STDERR "%s %.3f %.3f\n",substr($inline,8,3),$CurAtPos[0],$CurAtPos[1];
+		}
+		    
+		
+	    }
+
+	    if( ($inline =~ /^HETATM/ ) && (substr($inline,12,1) ne 'V') && (substr($inline,12,1) ne 'H') ) {   #don't count virtual atoms or H
+		my @CurSubAtPos = ((substr($inline,31,7))/1, (substr($inline,39,7))/1, (substr($inline,47,7))/1,substr($inline,7,9) );
+		push(@HetAtoms,[@CurSubAtPos]);
+	    }
+
+	    if($inline =~ /^END/) {close CURFILE;}
+	
+	}
+
+	#now roughly check where the ligand is in relation to the native ligand
+	if($CheckNativeLig) {
+	    
+	    $CurScaf = "/dump/flo/matching/scaffolds/retranspose/".&ScaffoldName($CurStruct)."_0_rt.pdb";
+	    #printf STDERR "Scaffold of $CurStruct is $CurScaf \n";
+	    if(!(-e $CurScaf)){
+		$CheckNativeLig = 0;
+		printf STDERR "Error: no native scaffold found for $CurStruct.\n";
+	    }
+	    else{
+		@NativeLigAtoms = readpipe "grep HETATM $CurScaf";
+		$NumNativeLigAtoms = scalar @NativeLigAtoms;
+	    }
+	}
+
+	my $NumBBatoms = scalar @BBAtoms;
+	my $NumHetAtoms = scalar @HetAtoms;
+	my $NumResidues = scalar @CbCoords;
+
+	#printf STDERR "%s backbone atoms, %s substrate atoms\n",$NumBBatoms,$NumHetAtoms;
+	my $WorstDist = 1000;
+	my $WorstClash;
+	
+	
+	for(my $hx = 0; $hx < $NumHetAtoms; $hx++) {
+
+	    my $AtomWithinNative = 0;
+	    my @CurSubAt = @{$HetAtoms[$hx]};
+	    for(my $bx = 0; $bx < $NumBBatoms ; $bx++) {
+		if((my $CurDist = &VectorLength(&Substract3DVectors(@CurSubAt,@{$BBAtoms[$bx]}))) < $CutOff) {
+		    if($CurDist < $WorstDist) {
+			$WorstDist = $CurDist;
+			my $ClashString = " worst: ".$CurSubAt[3]." ".${@{$BBAtoms[$bx]}}[3].", dist=".$CurDist;
+			$WorstClash = $ClashString;
+		    }
+		    #printf STDERR $ClashString;
+		    $CurClash = 1;
+		}
+	    }
+
+	    if($CheckNativeLig){
+		for(my $nx = 0; $nx < $NumNativeLigAtoms ; $nx++) {
+		    if( (substr($NativeLigAtoms[$nx],12,1) eq 'H') || (substr($NativeLigAtoms[$nx],13,1) eq 'H') ) { next;}
+		    
+		    my @CurNativeAtom = ((substr($NativeLigAtoms[$nx],31,7))/1, (substr($NativeLigAtoms[$nx],39,7))/1, (substr($NativeLigAtoms[$nx],47,7))/1,substr($NativeLigAtoms[$nx],7,9) );
+		    #my $CurNativeHetDist = &VectorLength(&Substract3DVectors(@CurSubAt,@CurNativeAtom));
+		    if( &VectorLength(&Substract3DVectors(@CurSubAt,@CurNativeAtom)) < $NativeCutOff ) { $AtomWithinNative = 1; next; }
+		    #printf STDERR "Distance between %s and %s is %.2f, where the latter coordinates are %.3f, %.3f, %.3f\n",$CurSubAt[3],substr($NativeLigAtoms[$nx],12,4),$CurNativeHetDist,$CurNativeAtom[0],$CurNativeAtom[1],$CurNativeAtom[2];
+
+		}
+		if($AtomWithinNative) {$NumAtomsWithinNative++;}
+		#else {printf STDERR "Atom %s is not within reach of any native atom.\n",$CurSubAt[3];}
+	    }
+
+	    if($CheckLigNeighbors) {
+
+		for(my $rx = 0; $rx < $NumResidues; $rx++; ) {
+		    if( &VectorLength(&Substract3DVectors(@CurSubAt,@{$CbCoords[$rx]})) < $NeighborCutOff) {
+			$CbCoords[$rx][3] = &AtomLigandPart(@CurSubAt);
+		    }
+		}		
+	    }		
+	}
+
+	if($CheckNativeLig){
+	    my $WithinNativeRatio;
+	    if($NumNativeLigAtoms < 1 ) { $WithinNativeRatio = 1;}
+	    else { $WithinNativeRatio = sprintf( "%.2f",($NumAtomsWithinNative/$NumHetAtoms));}
+	    $CurStruct = $CurStruct." $WithinNativeRatio ";
+	}
+
+	$CurStruct = $CurStruct.$WorstClash."\n";
+	if($CurClash){ 
+	    push(@ClashingStructs,$CurStruct);
+	}
+	else{push(@NoClashStructs,$CurStruct);}
+    
+    }
+    else{}#printf STDOUT "$CurStruct shit\n";
+}
+
+my $ClashStructNum = scalar @ClashingStructs;
+my $NoClashNum = scalar @NoClashStructs;
+
+printf STDERR "$ListFile: a total of %s structures have bb hetatm clashes.\n",$ClashStructNum;
+
+for(my $ii = 0; $ii < $NoClashNum; $ii ++){
+    printf STDOUT $NoClashStructs[$ii];
+   
+}
+
+    #else {printf STDOUT "Couldn't find $CurStruct\n";}
+
+

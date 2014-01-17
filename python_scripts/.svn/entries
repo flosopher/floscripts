@@ -1,0 +1,55 @@
+8
+
+dir
+19504
+https://svn.rosettacommons.org/source/trunk/python_scripts
+https://svn.rosettacommons.org/source
+
+
+
+2007-10-31T22:59:54.196302Z
+18142
+ashworth
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+6189c7af-7406-0410-a2ce-f22f51069c23
+
+__init__.py
+file
+
+
+
+
+2008-01-08T00:57:02.000000Z
+5896835df7a6bdfb86cd70bc811d0e07
+2007-09-21T00:28:17.575084Z
+17310
+ashworth
+
+pymol_scripts
+dir
+
+README
+file
+
+
+
+
+2008-01-08T00:57:02.000000Z
+a818c364aae2a5c97face6d84cba4bce
+2007-02-13T07:18:33.623779Z
+12730
+johnk
+

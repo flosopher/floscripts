@@ -1,0 +1,25 @@
+ _ feedback push
+_ feedback disable,all,everything
+
+# To use, rename this file to ~/.pymolrc
+
+from pymol import cmd
+
+import sys
+sys.path.append("~/python_scripts/")
+sys.path.append("~/python_scripts/pymol_scripts")
+
+run ~/python_scripts/pymol_scripts/all_commands.py
+
+# note that the following standard syntax will work as long as the package is defined correctly -ja
+# from pymol_scripts import *
+
+# END COMMANDS
+_ feedback pop
+
+#print "Done custom PyMOL setup"
+
+
+
+
+

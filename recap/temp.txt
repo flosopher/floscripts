@@ -1,0 +1,84 @@
+old result
+
+[flo@para 1dqx]$ ~/scripts/recap/CalcResFreqsFromAlignment.pl 1dqx des
+1dqx: Design Position file read, 34 variable positions.
+1dqx: Alignment file with 42 homologous sequences read. 42
+1dqx: Alignment file with 110 designed sequences read. 110
+Position          Natural distribution      ||         Designed sequences distribution
+S35   0.14 A, 0.83 S, 0.02 N,  ||  1.00 A,
+D37   1.00 D,  ||  1.00 D,
+H61   1.00 H,  ||  0.47 S,  0.05 T,  0.48 D,
+I64   0.02 T, 0.93 I, 0.05 V,  ||  0.47 S,  0.53 T,
+I97   1.00 I,  ||  1.00 I,
+G98   1.00 G,  ||  1.00 G,
+N99   0.02 S, 0.02 T, 0.95 N,  ||  1.00 N,
+T100   1.00 T,  ||  1.00 T,
+L150   0.14 I, 0.86 L,  ||  1.00 V,
+L153   0.52 M, 0.48 L,  ||  1.00 M,
+S154   0.83 S, 0.17 T,  ||  1.00 S,
+C155   0.95 S, 0.05 C,  ||  1.00 T,
+S158   0.17 A, 0.69 S, 0.07 T, 0.07 N,  ||  1.00 S,
+S160   0.88 A, 0.02 S, 0.10 T,  ||  1.00 A,
+I183   0.83 I, 0.17 V,  ||  1.00 V,
+Q185   0.02 S, 0.60 Q, 0.14 T, 0.07 M, 0.14 G, 0.02 V,  ||  1.00 T,
+P202   0.17 T, 0.83 P,  ||  0.55 P,  0.45 G,
+G203   1.00 G,  ||  1.00 G,
+G205   0.19 Q, 0.17 N, 0.64 G,  ||  0.03 S,  0.97 G,
+D208   0.17 S, 0.15 A, 0.02 Q, 0.02 T, 0.44 D, 0.05 K, 0.02 I, 0.02 E, 0.10 V,  ||  0.65 S,  0.11 D,  0.02 G,  0.23 L,
+G210   0.05 S, 0.95 G,  ||  1.00 G,
+Q215   1.00 Q,  ||  0.19 S,  0.11 A,  0.34 D,  0.36 R,
+Y217   0.02 W, 0.98 Y,  ||  0.02 F,  0.95 H,  0.03 G,
+I232   0.02 Q, 0.98 I,  ||  1.00 I,
+V233   0.10 A, 0.07 S, 0.83 V,  ||  1.00 V,
+G234   1.00 G,  ||  1.00 G,
+R235   1.00 R,  ||  0.21 S,  0.13 N,  0.13 D,  0.01 K,  0.08 R,  0.01 L,  0.44 E,
+G236   1.00 G,  ||  1.00 G,
+L237   0.52 I, 0.48 L,  ||  0.45 I,  0.55 L,
+A239   0.04 S, 0.15 A, 0.04 D, 0.04 K, 0.74 G,  ||  1.00 G,
+274   1.00 ,  ||  1.00 S,
+275   1.00 ,  ||  1.00 G,
+276   1.00 ,  ||  0.04 F,  0.11 Q,  0.08 D,  0.27 I,  0.02 R,  0.34 Y,  0.14 E,  0.01 V,
+277   1.00 ,  ||  0.45 A,  0.55 S,
+
+
+
+new result
+[flo@para 1dqx]$ ~/scripts/recap/CalcResFreqsFromAlignment.pl 1dqx des
+1dqx: Design Position file read, 34 variable positions.
+IGNT1dqx: Alignment file with 42 homologous sequences read. 42
+1dqx: Alignment file with 110 designed sequences read. 110
+Position          Natural distribution      ||         Designed sequences distribution
+S35   0.14 A, 0.83 S, 0.02 N,  ||  1.00 A,
+D37   1.00 D,  ||  1.00 D,
+H61   1.00 H,  ||  0.47 S,  0.05 T,  0.48 D,
+I64   0.02 T, 0.93 I, 0.05 V,  ||  0.47 S,  0.53 T,
+I97   1.00 I,  ||  1.00 I,
+G98   1.00 G,  ||  1.00 G,
+N99   0.02 S, 0.02 T, 0.95 N,  ||  1.00 N,
+T100   1.00 T,  ||  1.00 T,
+L150   0.14 I, 0.86 L,  ||  1.00 V,
+L153   0.52 M, 0.48 L,  ||  1.00 M,
+S154   0.83 S, 0.17 T,  ||  1.00 S,
+C155   0.95 S, 0.05 C,  ||  1.00 T,
+S158   0.17 A, 0.69 S, 0.07 T, 0.07 N,  ||  1.00 S,
+S160   0.88 A, 0.02 S, 0.10 T,  ||  1.00 A,
+I183   0.83 I, 0.17 V,  ||  1.00 V,
+Q185   0.02 S, 0.60 Q, 0.14 T, 0.07 M, 0.14 G, 0.02 V,  ||  1.00 T,
+P202   0.17 T, 0.83 P,  ||  0.55 P,  0.45 G,
+G203   1.00 G,  ||  1.00 G,
+G205   0.19 Q, 0.17 N, 0.64 G,  ||  0.03 S,  0.97 G,
+D208   0.17 S, 0.15 A, 0.02 Q, 0.02 T, 0.44 D, 0.05 K, 0.02 I, 0.02 E, 0.10 V,  ||  0.65 S,  0.11 D,  0.02 G,  0.23 L,
+G210   0.05 S, 0.95 G,  ||  1.00 G,
+Q215   1.00 Q,  ||  0.19 S,  0.11 A,  0.34 D,  0.36 R,
+Y217   0.02 W, 0.98 Y,  ||  0.02 F,  0.95 H,  0.03 G,
+I232   0.02 Q, 0.98 I,  ||  1.00 I,
+V233   0.10 A, 0.07 S, 0.83 V,  ||  1.00 V,
+G234   1.00 G,  ||  1.00 G,
+R235   1.00 R,  ||  0.21 S,  0.13 N,  0.13 D,  0.01 K,  0.08 R,  0.01 L,  0.44 E,
+G236   1.00 G,  ||  1.00 G,
+L237   0.52 I, 0.48 L,  ||  0.45 I,  0.55 L,
+A239   0.04 S, 0.15 A, 0.04 D, 0.04 K, 0.74 G,  ||  1.00 G,
+I274   1.00 I,  ||  1.00 S,
+G275   1.00 G,  ||  1.00 G,
+N276   0.02 S, 0.02 T, 0.95 N,  ||  0.04 F,  0.11 Q,  0.08 D,  0.27 I,  0.02 R,  0.34 Y,  0.14 E,  0.01 V,
+T277   1.00 T,  ||  0.45 A,  0.55 S,

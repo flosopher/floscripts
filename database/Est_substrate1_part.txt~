@@ -1,0 +1,25 @@
+#file that determines which atoms of the esterase ligand belong to which moiety
+#there are 23 heavyatoms in the ligand
+ATOM    1
+ATOM    2
+ATOM    3
+ATOM    4
+ATOM    5
+ATOM    6
+ATOM    7
+ATOM    8
+ATOM    9
+ATOM   10
+ATOM   11
+ATOM   12
+ATOM   13
+ATOM   14
+ATOM   15
+ATOM   16
+ATOM   17
+ATOM   18
+ATOM   19
+ATOM   20
+ATOM   21
+ATOM   22
+ATOM   23   

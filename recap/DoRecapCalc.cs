@@ -1,0 +1,89 @@
+#!/bin/tcsh
+
+
+#script to run a recapitulation calculation and then concatenate the obtained sequences into a fasta file
+
+#-pose1 -cst_mode -s match_1_14_endoTS_3R4S_Asn_noH_nochromo_1dl3_9_1_0001_0001_40_0001.pdb -paths paths.txt -enable_ligand_aa -cstfile 1asn_wInt.cst -fix_catalytic_aa -cst_design -soft_rep_design -ex1 -ex2 -linmem_ig -resfile optimize.resfile -cst_min -rb_move -chi_move -bb_move -ndruns 1 -nstruct 100 -check_finish -read_old_header -cst_dockpert 0.1 1 -use_mdl_connect -mdlfile final.mol -ligand
+#
+#
+#
+#
+
+
+#set rosettalocb = /work/flo/rosetta/sandbox_latejuly.intel
+set rosettalocb = /work/flo/rosetta/sandbox/rosetta.intel
+set comlineoptionsb = "-pose1 -cst_mode -enable_ligand_aa -cst_design -try_both_his_tautomers -fix_catalytic_aa -ex1aro -ex2 -soft_rep_design -cst_min -chi_move -extrachi_cutoff 1.0" 
+
+
+#foreach enzyme (1ney )
+#foreach enzyme (1p6o 1dqx 1jcl 1c2t 6cpa 1h2j 1oex 1ney)
+#foreach enzyme (1dqx 1jcl 1c2t 6cpa 1h2j 1oex 1ney )
+foreach enzyme ( $1 $2 )
+
+cd $enzyme
+
+echo starting runs for $enzyme
+
+#score and repack structure first
+nice +19 $rosettalocb -pose1 -cst_mode -enable_ligand_aa -cst_score -s ${enzyme}.pdb -cstfile ${enzyme}.cst -try_both_his_tautomers -pdbout ${enzyme}_score > score_${enzyme}.out
+
+mv ${enzyme}_score_0001.pdb ${enzyme}_score.pdb
+
+
+nice +19 $rosettalocb $comlineoptionsb -s ${enzyme}_score.pdb -cstfile ${enzyme}.cst -short_interface -cut1 0.0 -cut2 0.0 -cut3 10.0 -cut4 12.0 -pdbout ${enzyme}_repack -nstruct 1 > ${enzyme}_repack.out
+
+mv ${enzyme}_repack_0001.pdb ${enzyme}_repack.pdb
+cp ${enzyme}_score.pdb workruns/
+cp ${enzyme}_repack.pdb workruns/
+
+#calculate repack rmsd
+#~/scripts/recap/CalculateRmsRepackScore.pl $enzyme > ${enzyme}_repackrms.ana
+
+rm ${enzyme}_score.pdb
+rm ${enzyme}_repack.pdb
+
+echo done scoring and repacking for $enzyme
+
+#now do input sidechain designs
+nice +19 $rosettalocb $comlineoptionsb -s ${enzyme}.pdb -cstfile ${enzyme}.cst -resfile ${enzyme}.resfile -use_input_sc -pdbout ${enzyme}_des_useisc -nstruct 30 -min_best_rots -rotamer_explosion 5 > ${enzyme}_des_useisc.out
+
+#repack isc designs without lig bias
+#ls ${enzyme}_des_useisc_wlrm*pdb > ${enzyme}_des_useisc_wlrm.list
+#nice +19 $rosettalocb $comlineoptionsb -l ${enzyme}_des_useisc_wlrm.list -cstfile ${enzyme}.cst -short_interface -cut1 0.0 -cut2 0.0 -cut3 10.0 -cut4 12.0 -use_input_sc > ${enzyme}_repack_useisc_wlrm.out
+#ls ${enzyme}_des_useisc*00*_0001.pdb > templist
+#/arc/flo/scripts/genutils/ModifyFilename.pl -l templist -op _wlrm_ -np _
+#/arc/flo/scripts/genutils/ModifyFilename.pl -l templist -op _0001.pdb -np .pdb
+
+foreach struct (${enzyme}_des_useisc_0*pdb)
+~/scripts/pdbutils/getFastaFromCoords.pl -pdbfile $struct >> ${enzyme}_des_useisc.fasta
+end
+
+mv ${enzyme}_des_useisc*pdb workruns/
+mv ${enzyme}_des_useisc.fasta workruns/
+
+echo done with inputsc designs for $enzyme
+
+nice +19 $rosettalocb $comlineoptionsb -s ${enzyme}_polyA.pdb -cstfile ${enzyme}.cst -resfile ${enzyme}.resfile -pdbout ${enzyme}_des -nstruct 50 -min_best_rots -rotamer_explosion 5 > ${enzyme}_des_wlrm.out
+rm ${enzyme}_des.fasta
+
+#repack designs without lig bias
+#ls ${enzyme}_des_wlrm*pdb > ${enzyme}_des_wlrm.list
+#nice +19 $rosettalocb $comlineoptionsb -l ${enzyme}_des_wlrm.list -cstfile ${enzyme}.cst -short_interface -cut1 0.0 -cut2 0.0 -cut3 10.0 -cut4 12.0  > ${enzyme}_repack_wlrm.out
+#ls ${enzyme}_des_wlrm*00*_0001.pdb > templist
+#/arc/flo/scripts/genutils/ModifyFilename.pl -l templist -op _wlrm_ -np _
+#/arc/flo/scripts/genutils/ModifyFilename.pl -l templist -op _0001.pdb -np .pdb
+
+foreach struct (${enzyme}_des_0*pdb)
+~/scripts/pdbutils/getFastaFromCoords.pl -pdbfile $struct >> ${enzyme}_des.fasta
+end
+
+mv ${enzyme}_des*pdb workruns/
+mv ${enzyme}_des.fasta workruns/
+
+cd ../
+
+end
+
+unset rosettaloc
+
+unset comlineoptions

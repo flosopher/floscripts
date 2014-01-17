@@ -1,0 +1,49 @@
+#!/usr/bin/perl 
+
+
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage:   for_flo.pl infile1\n It's not hard, idiot!!\n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+use strict;     # vars must be declared before usage
+
+
+while ($#ARGV>=0) {    # comment: $# means "index to last element of the array
+  if ($ARGV[0] eq "-help" || $ARGV[0] eq "-h") {
+    &usage();
+  } else {
+    $design = shift(@ARGV);
+    $mode = shift(@ARGV);
+    }
+}
+if (!$design) {printf STDERR "Please specify design\n";
+	       exit 1;
+}
+
+
+my $start_reading = 0;
+my @resarray;
+my $nr_actsite_res = 0;
+
+open(RESFILE,"${design}_nolig.resfile");
+
+while(<RESFILE>) {
+    chomp;
+    my $inline=$_;
+
+    if($inline =~ /~start/) {$start_reading = 1;}
+    
+    elsif($start_reading) {
+	my @p = split(' ', $inline);
+	if ($p[3] == "NATAA") {
+	    push($p[2],@resarray);
+	    $nr_actsite_res++;
+	}
+
+    }
+
+}
+	

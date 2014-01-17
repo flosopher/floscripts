@@ -1,0 +1,206 @@
+#!/usr/bin/perl
+
+#script to read in a file containing a data matrix and another file containing requirements for the values in the columns of the matrix
+#and then only select those rows of the matrix that meet all the requirements
+
+use strict;
+
+#function to calculate standard deviation of array of values. IMPORTANT. the average value has to be in the 0 element of the array
+sub StDev {
+    my @Values = @_;
+    my $NumValues = (scalar @Values) - 1;
+    #printf STDERR " hiargh %s %s \n",$NumValues, @Values[2];
+    my $SDsum = 0;
+    for(my $i = 1; $i <= $NumValues; $i++) {
+	my $SQelement = $Values[$i] - $Values[0];
+	$SDsum = $SDsum + ($SQelement * $SQelement);
+    }
+    return sqrt($SDsum/$NumValues);
+}
+
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: -d <datafile> -c <file with requirements> \n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+#printf STDERR " $#ARGV \n";
+if($#ARGV < 2) {&usage(); exit 1}
+
+
+my $DataFile;
+my @DataStrings = ();
+my @DataArray = ();
+my @ColumnArray = ();
+
+my $RequireFile;
+my $NumReqs = 0;
+my @ReqStrings = ();
+my $OutputSort = 0;
+my $OutputColumn = 0;
+my $OutOption = 0;
+
+for(my $ii = -1; $ii < $#ARGV;$ii++){
+    if ($ARGV[$ii] eq '-d'){$DataFile = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-c'){$RequireFile = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-short_output'){$OutOption = 1;}
+}
+
+
+#----block to read in the requirements for each column----
+
+open(REQFILE,$RequireFile) || die "Could not open $RequireFile\n";
+while(<REQFILE>) {
+
+    chomp;
+    my $inline = $_;
+
+    if(substr($inline,0,3) eq 'req') {
+	$ReqStrings[$NumReqs] = $inline;
+	$NumReqs++;
+    }
+    if(substr($inline,0,6) eq 'output') {
+	my @outarray = split(' ',$inline);
+	$OutputSort = $outarray[1];
+	$OutputColumn = $outarray[2];
+    }
+}
+close REQFILE;    
+
+#requirements read in, now read in data
+
+open(DATAFILE,$DataFile) || die "Could not open $DataFile\n"; 
+@DataStrings = <DATAFILE>;
+close DATAFILE;
+
+
+my $NumRows = scalar @DataStrings;
+
+my $NumColumns;
+my $NumCommentLines = 0;
+my @AvValues = ();
+
+for(my $ii = 0; $ii < $NumRows; $ii++){
+
+    if(substr($DataStrings[$ii],0,1) eq '#') {$NumCommentLines++;}
+
+    else{
+	my @CurLineArray = split(' ',$DataStrings[$ii]);
+	if($ii == $NumCommentLines) { $NumColumns = scalar @CurLineArray;} #first data line, check how many columns there are
+
+	if( $NumColumns != scalar @CurLineArray) {printf STDERR "File $DataFile is corrupted. Rows don't have equal number of columns. First offending entry is line $ii\n"; exit 1;}
+	
+	$CurLineArray[$NumColumns] = $ii;    #keeping track of what DataArray line belongs to what DataStrings line
+	$CurLineArray[$NumColumns+1] = 1;    #indicator of wheter this line fullfills all the requirements
+	@{$DataArray[$ii - $NumCommentLines]} = @CurLineArray;
+
+	#buildup column arrays
+	for(my $jj = 1; $jj <= $NumColumns; $jj++){
+	    $ColumnArray[$jj][$ii-$NumCommentLines] = $CurLineArray[$jj-1];
+	    $ColumnArray[0][$jj] = $ColumnArray[0][$jj] + $CurLineArray[$jj-1]; #keep average values in 0th line of column array
+	} 
+
+    }
+
+}
+
+my $NumEntries = $NumRows - $NumCommentLines;
+
+#calculate average values
+for(my $jj = 1; $jj <= $NumColumns; $jj++){
+    $ColumnArray[0][$jj] = $ColumnArray[0][$jj] / $NumEntries;
+}
+
+printf STDERR "Data read in, average values for $NumEntries entries with $NumColumns columns determined, now checking for satisfying entries\ncolumn averages: ";
+for(my $jj = 1; $jj <= $NumColumns; $jj++){
+    printf STDERR "%s ",sprintf("%.2f",$ColumnArray[0][$jj]);
+}
+printf STDERR "\n";
+
+#---now perform exclusions----
+
+for(my $rr = 0; $rr < $NumReqs; $rr++) {
+    my @CurReqArray = split(' ',$ReqStrings[$rr]);
+    my $CurCol = $CurReqArray[1];
+    my $CurMode = $CurReqArray[2];
+    my $CurSubmode = $CurReqArray[3];
+    my $CurValue = $CurReqArray[4];
+    printf STDERR "\n$CurCol $CurMode $CurSubmode $CurValue ";
+
+    if($CurMode eq 'value'){    #absolute value mode, select only those entries that have an absolute value higher, lower or equal to a given cutoff
+	if($CurSubmode eq '>'){
+	    for(my $ii = 0; $ii < $NumEntries; $ii++){
+		if($DataArray[$ii][$CurCol - 1] <= $CurValue){$DataArray[$ii][$NumColumns+1] = 0;}
+	    }
+	}
+	elsif($CurSubmode eq '<'){
+	    for(my $ii = 0; $ii < $NumEntries; $ii++){
+		if($DataArray[$ii][$CurCol - 1] >= $CurValue){$DataArray[$ii][$NumColumns+1] = 0;}
+	    }
+	
+	}
+	elsif($CurSubmode eq '=') { #value has to equal something
+	   for(my $ii = 0; $ii < $NumEntries; $ii++){
+		if($DataArray[$ii][$CurCol - 1] != $CurValue){$DataArray[$ii][$NumColumns+1] = 0;}
+	    }
+       }
+	  
+    }
+
+    if($CurMode eq 'fraction'){     #percentage mode, select only those entries which are among the best or worst $CurValue percent entries in a column
+	
+	my @CurColSort = sort {$a <=> $b} @{$ColumnArray[$CurCol]};
+	
+	if((scalar @CurColSort) != $NumEntries){printf STDERR "Error, not enough entries for column $CurCol.\n"; exit 1;} #sanity check
+
+	$CurColSort[$NumEntries] = $CurColSort[$NumEntries - 1] + 1; #have to put sentinel at end of array that's the biggest number
+	my $NumToSelect = sprintf("%.0f",$NumEntries * $CurValue);
+	#my $NumToSelect = $NumEntries * $CurValue;
+	my $CutOffValue = 0;
+	printf STDERR "numto select is $NumToSelect, ";
+	
+	if($CurSubmode eq '>'){ #highest percentage
+	    $CutOffValue = $CurColSort[$NumEntries - $NumToSelect];
+	    printf STDERR "cut off is $CutOffValue \n";
+	    for(my $ii = 0; $ii < $NumEntries; $ii++){
+		if($DataArray[$ii][$CurCol - 1] < $CutOffValue){$DataArray[$ii][$NumColumns+1] = 0;}
+	    }
+	} 
+	elsif($CurSubmode eq '<'){#lowest percentage
+	    $CutOffValue = $CurColSort[$NumToSelect - 1];
+	    printf STDERR "cut off is $CutOffValue \n";
+	    for(my $ii = 0; $ii < $NumEntries; $ii++){
+		if($DataArray[$ii][$CurCol - 1] > $CutOffValue){$DataArray[$ii][$NumColumns+1] = 0;}
+	    }
+	} 
+
+    }
+}
+printf STDERR "\n";
+
+
+#-----exlusions performed, now output
+
+
+my @SortDataArray = ();
+
+if($OutputColumn){
+    
+    if($OutputSort eq 'sortmin'){ printf STDERR "output sorted ascending by column $OutputColumn\n"; @SortDataArray = sort {$a->[$OutputColumn - 1] <=> $b->[$OutputColumn - 1]} @DataArray; }
+    elsif($OutputSort eq 'sortmax'){ printf STDERR "output sorted descending by column $OutputColumn\n"; @SortDataArray = sort {$b->[$OutputColumn - 1] <=> $a->[$OutputColumn - 1]} @DataArray; }
+    else{@SortDataArray = @DataArray; printf STDERR "output line not understood, not sorting output.\n";}
+}
+else{@SortDataArray = @DataArray;}
+
+if( $OutOption != 1) {printf STDOUT "%s",$DataStrings[0];} #assuming the first line is the title line
+for(my $ii = 0; $ii < $NumEntries; $ii++){  
+    
+    if(($SortDataArray[$ii][$NumColumns + 1]) == 1) {
+
+	if($OutOption == 1) { printf STDOUT "%s \n",$SortDataArray[$ii][0];} #only print out filenames
+	else {printf STDOUT "%s",$DataStrings[$SortDataArray[$ii][$NumColumns]];}
+    }
+}
+		
+			

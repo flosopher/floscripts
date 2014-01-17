@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+
+
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage:   CalcVirE.pl design\n It's not hard, idiot!!\n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+my $design;
+
+while ($#ARGV>=0) {    # comment: $# means "index to last element of the array
+  if ($ARGV[0] eq "-help" || $ARGV[0] eq "-h") {
+    &usage();
+  } else {
+    $design = shift(@ARGV);
+    }
+}
+
+
+my $count = 0;
+my $minfound = 0;
+
+open(RMSDFILE,"${design}_DockEvsRMSD.ana");

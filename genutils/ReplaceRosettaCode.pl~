@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+
+#script to copy all files given in a list file to a specified location
+#same line in the files of the two molecules
+
+
+use strict;
+
+
+ 
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: -s <substitute string> -l <listfile of files> or -s <struct>\n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+#printf STDERR " $#ARGV \n";
+if($#ARGV < 3) {&usage(); exit 1}
+
+
+my $ListOption = 0;
+my $NewString = -1;
+my $ListFile = -1;
+my @StructList = ();
+
+for(my $ii = -1; $ii < $#ARGV;$ii++){
+    if ($ARGV[$ii] eq '-s'){$NewString = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-l'){$ListOption = 1; $ListFile = $ARGV[$ii+1];}
+    
+}
+
+
+my $NumStruct = 0;
+
+if($ListOption){
+    open(LISTFILE, $ListFile) || die "Could not open $ListFile\n";
+    @StructList = <LISTFILE>;
+    close LISTFILE;
+    $NumStruct = scalar @StructList;
+}
+
+else {
+    $StructList[0] = $SingStruct;
+    $NumStruct =1;
+    $ListFile = $SingStruct;
+}
+
+
+for(my $ii = 0; $ii < $NumStruct; $ii ++){
+    
+    chomp($StructList[$ii]);
+    my $CurLength = length ($StructList[$ii]);
+    substr($StructList[$ii],$CurLength - 8, $CurLength -4) = $NewString;
+}     
+
+
+    
+

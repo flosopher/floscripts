@@ -1,0 +1,1 @@
+cat input.txt | python codon_mapper.py 

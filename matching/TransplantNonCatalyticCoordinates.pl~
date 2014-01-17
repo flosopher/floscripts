@@ -1,0 +1,138 @@
+#!/usr/bin/perl
+
+#script to compare the residual energies of a given design to the energies of the 
+#wildtype structure. all the residue numbers that have worse energies in the 
+#design are reported
+#
+#written by flo, oct 2007
+
+
+use Math::Complex;
+
+use strict;
+
+
+
+sub ScaffoldName {
+
+    my @ScaffoldList = ("1abe","1gca","1hsl","1wdn","2dri","1ey4","1fkj","1mbt","1oho","1rx8","1sjw","1tsn","1ank","1cbs","1dc9","1ifc","1lic","1nah","1sa8");
+    my $CheckScaf = $_[0];
+    
+    foreach my $item (@ScaffoldList) {
+	if($CheckScaf =~ m/$item/) { return $item;}
+    }
+    return 0;
+}
+
+sub ReadRosettaOutResidueEnergies {
+
+    my @ResidueEnergies = ();
+    my $ReadStruct = $_[0];
+
+
+    open(STRUCT,$ReadStruct) || die "Error: could not find file $ReadStruct.\n"; 
+    my $StructReadingFlag = 0;
+    my $ResCounter = 0;
+
+    while(<STRUCT>) {
+	my $inline = $_;
+
+	if($inline =~ /totals/) { $StructReadingFlag = 0;}
+
+	
+	if($StructReadingFlag) {
+	    my @linearray = split(' ',$inline);
+	    if( ($linearray[1] eq 'LG1') || ($linearray[1] eq 'LG2') ) { next;}
+	    $ResCounter++;
+	    if($ResCounter != $linearray[0]) { die "Error: Residues in $ReadStruct are not continuous.\n";}
+	    $ResidueEnergies[$linearray[0]] = $linearray[17];
+	}
+	
+	if($inline =~ /res aa/) { $StructReadingFlag = 1;}
+    }
+    
+    return @ResidueEnergies;
+
+}
+ 
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: -t <template scaffold> -l <listfile of structures> or -s <struct> -Ecut <energy cutoff, default 1.0> \n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+#printf STDERR " $#ARGV \n";
+if($#ARGV < 3) {&usage(); exit 1}
+
+
+my $ECutOff = 0.9;
+my $ListOption = 0;
+my $ScafStruct = -1;
+my $ListFile = -1;
+my $SingStruct = -1;
+my @StructList = ();
+
+for(my $ii = -1; $ii < $#ARGV;$ii++){
+    if ($ARGV[$ii] eq '-Ecut'){$ECutOff = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-l'){$ListOption = 1; $ListFile = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-s'){$SingStruct = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-t'){$ScafStruct = $ARGV[$ii+1];}
+}
+
+if($ECutOff <= 0){printf STDERR "Error: have to give a cutoff value bigger than 0\n"; &usage(); exit 1;}
+
+
+my $NumStruct = 0;
+
+if($ListOption){
+
+    open(LISTFILE, $ListFile) || die "Could not open $ListFile\n";
+    @StructList = <LISTFILE>;
+    close LISTFILE;
+    $NumStruct = scalar @StructList;
+    #$Scaf = substr($ListFile,0,4);
+    printf STDERR "Comparing residue energies for list of structures $ListFile containing $NumStruct structures..\n";
+}
+
+else {
+    $StructList[0] = $SingStruct;
+    $NumStruct =1;
+    printf STDERR "Comparing residue energies for single structure $SingStruct ..\n";
+    $ListFile = $SingStruct;
+}
+
+
+#input read in, now analyze structures
+
+my @ScafEnergies = &ReadRosettaOutResidueEnergies($ScafStruct);
+my $NumScafResidues = scalar @ScafEnergies;
+
+
+
+for(my $ii = 0; $ii < $NumStruct; $ii ++){
+    
+    my $CurStruct = $StructList[$ii];
+    chomp($CurStruct);
+    my @BadResidues = ();
+
+    my @CurStructEnergies = &ReadRosettaOutResidueEnergies($CurStruct);
+    my $NumCurStructResidues = scalar @CurStructEnergies;
+
+    if($NumScafResidues != $NumCurStructResidues) {
+	printf STDERR "Error: $CurStruct does not have the same number of residues as the scaffold, skipping... \n";
+	printf STDOUT "Error: $CurStruct does not have the same number of residues as the scaffold, skipping... \n";
+	next;
+    }
+
+    for(my $ii = 1; $ii <= $NumScafResidues; $ii++) {
+	my $ResEDiff = $CurStructEnergies[$ii] - $ScafEnergies[$ii];
+	if($ResEDiff > $ECutOff) { push(@BadResidues,$ii);}
+    }
+
+    printf STDOUT "$CurStruct has violations at pos: ";
+    foreach my $resi (@BadResidues) { printf STDOUT "$resi ";}
+    printf STDOUT "\n";
+}
+
+

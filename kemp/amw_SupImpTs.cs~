@@ -1,0 +1,80 @@
+#!/bin/tcsh
+
+foreach design ( amw_1a53_1 amw_1i4n_1 amw_1lbm_1 amw_KE_v04_1 amw_1dc9_1 amw_1igs_1 amw_1thf_1 amw_KE_v04_2 )
+
+grep REMARK OrigDes/${design}.pdb > ${design}_F.pdb
+grep ATOM OrigDes/${design}.pdb >> ${design}_F.pdb 
+echo TER >> ${design}_F.pdb
+
+end
+
+foreach design (amw_1thf_1 amw_1lbm_1 amw_1i4n_1)
+
+grep HETATM OrigDes/${design}.pdb >> ${design}_F.pdb
+echo END >> ${design}_F.pdb
+
+end
+
+foreach design ( amw_1a53_1 amw_1dc9_1 amw_1igs_1 )
+
+
+	grep HETATM OrigDes/${design}.pdb | grep -v V >${design}_tstemp
+	echo readpdb ${design}_tstemp > tempmolscript
+	#echo readpdb temphetfile > tempmolscript
+	echo "select #i 1" >> tempmolscript
+	echo "select #i 9" >> tempmolscript
+	echo "select #i 10" >> tempmolscript
+ 	echo switch >> tempmolscript
+# 	echo readpdb prod_template >> tempmolscript
+	echo readpdb ../TS.pdb >> tempmolscript
+	echo "select #i 6" >> tempmolscript
+	echo "select #i 9" >> tempmolscript
+	echo "select #i 10" >> tempmolscript
+	echo fit >> tempmolscript
+	echo writepdb ${design}_fra.pdb >> tempmolscript
+	echo "exit" >> tempmolscript
+
+	/net/enzdes/molecule/molecule.exe < tempmolscript
+
+	rm tempmolscript
+
+	cat ${design}_fra.pdb >> ${design}_F.pdb 
+	echo END >> ${design}_F.pdb
+
+	
+	rm ${design}_fra.pdb
+	rm ${design}_tstemp
+
+end
+
+foreach design ( amw_KE_v04_1 amw_KE_v04_2 )
+
+
+	grep HETATM OrigDes/${design}.pdb | grep -v V >${design}_tstemp
+	echo readpdb ${design}_tstemp > tempmolscript
+	#echo readpdb temphetfile > tempmolscript
+	echo "select #i 1" >> tempmolscript
+	echo "select #i 9" >> tempmolscript
+	echo "select #i 13" >> tempmolscript
+ 	echo switch >> tempmolscript
+# 	echo readpdb prod_template >> tempmolscript
+	echo readpdb ../TS.pdb >> tempmolscript
+	echo "select #i 6" >> tempmolscript
+	echo "select #i 9" >> tempmolscript
+	echo "select #i 10" >> tempmolscript
+	echo fit >> tempmolscript
+	echo writepdb ${design}_fra.pdb >> tempmolscript
+	echo "exit" >> tempmolscript
+
+	/net/enzdes/molecule/molecule.exe < tempmolscript
+
+	rm tempmolscript
+
+	cat ${design}_fra.pdb >> ${design}_F.pdb 
+	echo END >> ${design}_F.pdb
+
+	
+	rm ${design}_fra.pdb
+	rm ${design}_tstemp
+
+end

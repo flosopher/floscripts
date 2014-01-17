@@ -1,0 +1,58 @@
+#!/usr/bin/perl
+
+#script to compare the residual energies of a given design to the energies of the 
+#wildtype structure. all the residue numbers that have worse energies in the 
+#design are reported
+#
+#written by flo, oct 2007
+
+
+use Math::Complex;
+
+use strict;
+
+
+
+sub ScaffoldName {
+
+    my @ScaffoldList = ("1abe","1gca","1hsl","1wdn","2dri","1ey4","1fkj","1mbt","1oho","1rx8","1sjw","1tsn","1ank","1cbs","1dc9","1ifc","1lic","1nah","1sa8");
+    my $CheckScaf = $_[0];
+    
+    foreach my $item (@ScaffoldList) {
+	if($CheckScaf =~ m/$item/) { return $item;}
+    }
+    return 0;
+}
+
+
+ 
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: -t <template scaffold> -l <listfile of structures> or -s <struct> -Ecut <energy cutoff, default 1.0> \n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+#printf STDERR " $#ARGV \n";
+if($#ARGV < 3) {&usage(); exit 1}
+
+
+my $ECutOff = 1.0;
+my $ListOption = 0;
+my $ListFile = -1;
+my $SingStruct = -1;
+my @StructList = ();
+
+for(my $ii = -1; $ii < $#ARGV;$ii++){
+    if ($ARGV[$ii] eq '-c'){$CutOff = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-l'){$ListOption = 1; $ListFile = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-s'){$SingStruct = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-check_native'){$CheckNativeLig = 1;}
+    if ($ARGV[$ii] eq '-native_cut'){$NativeCutOff = $ARGV[$ii+1];}
+    if ($ARGV[$ii] eq '-lig_neighbors'){$CheckLigNeighbors = 1;}
+}
+
+if($CutOff <= 0){printf STDERR "Error: have to give a cutoff value bigger than 0\n"; &usage(); exit 1;}
+
+
+

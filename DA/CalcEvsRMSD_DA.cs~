@@ -1,0 +1,26 @@
+#!/bin/tcsh
+
+
+
+foreach design (KE_0010_N130L KE_0010_N130V )
+
+cd $design
+
+foreach decoy (*.pdb)
+#
+#alternatively foreach desing (`cat list`)
+#
+# now write the temporary 'molecule' superpositioning scrip
+
+#/users/wollacott/py_scripts/tools/rms_cur.py -t ../${1}_stTS.pdb -p $decoy -s HET > rmsdtempfile
+/work/flo/edesign/scripts/kemp/dockERMSDget.pl $design $decoy >> tempunordered
+#rm rmsdtempfile
+
+end
+
+echo "decoy       Elig   RMSD  Etot" > ../analysis/${design}_DockEvsRMSD.ana
+/work/flo/edesign/scripts/kemp/ConcatDockRmsdE.pl tempunordered >> ../analysis/${design}_DockEvsRMSD.ana
+
+cd ..
+
+end

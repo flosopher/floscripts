@@ -1,0 +1,640 @@
+#!/usr/bin/perl
+
+#script to analyse, i.e. read out the important energy variables, from a recapitulation calculation. Also determines the percentage of catalytic sequence recovery.
+#the energy variables being read are bk_tot and the lines for each residue + ligand from the residual energy block 
+
+use Math::Complex;
+use strict;
+
+
+## function: zPad(num,len) 
+## pads the input number with leading zeros
+## to return a string of the desired length
+sub zPad {
+    my $num=shift;
+    my $newlen=shift;
+
+    my $origlen=length($num);
+    for (my $i=0; $i<($newlen-$origlen); $i++) {
+	$num="0".$num;
+    }
+    return $num;
+}
+
+#function: spPad(InpString,len) adds spaces to the beginning of the input string until the desired length is reached
+sub spPad {
+    my $InpString = $_[0];
+    my $newlen = $_[1];
+    
+    my $origlen=length($InpString);
+    for (my $i=0; $i<($newlen-$origlen); $i++) {
+	$InpString=" ".$InpString;
+    }
+    return $InpString;
+}
+
+#function: Padsp(InpString,len) adds spaces to the end of the input string until the desired length is reached
+sub Padsp {
+    my $InpString = $_[0];
+    my $newlen = $_[1];
+    
+    my $origlen=length($InpString);
+    for (my $i=0; $i<($newlen-$origlen); $i++) {
+	$InpString=$InpString." ";
+    }
+    return $InpString;
+}
+
+#function to calculate standard deviation of array of values. IMPORTANT. the average value has to be in the 0 element of the array
+sub StDev {
+    my @Values = @_;
+    my $NumValues = (scalar @Values) - 1;
+    #printf STDERR " hiargh %s %s \n",$NumValues, @Values[2];
+    my $SDsum = 0;
+    for(my $i = 1; $i <= $NumValues; $i++) {
+	my $SQelement = $Values[$i] - $Values[0];
+	$SDsum = $SDsum + ($SQelement * $SQelement);
+    }
+    return sqrt($SDsum/$NumValues);
+}
+
+
+sub AA_ThreeLetToOneLet {
+
+    my $pass_aa = $_[0];
+    my $return_val = "X";
+
+    if($pass_aa eq 'ALA') {$return_val = "A";}
+    elsif($pass_aa eq 'CYS') {$return_val = "C";}
+    elsif($pass_aa eq 'ASP') {$return_val = "D";}
+    elsif($pass_aa eq 'GLU') {$return_val = "E";}
+    elsif($pass_aa eq 'PHE') {$return_val = "F";}
+    elsif($pass_aa eq 'GLY') {$return_val = "G";}
+    elsif($pass_aa eq 'HIS') {$return_val = "H";}
+    elsif($pass_aa eq 'ILE') {$return_val = "I";}
+    elsif($pass_aa eq 'LYS') {$return_val = "K";}
+    elsif($pass_aa eq 'LEU') {$return_val = "L";}
+    elsif($pass_aa eq 'MET') {$return_val = "M";}
+    elsif($pass_aa eq 'ASN') {$return_val = "N";}
+    elsif($pass_aa eq 'PRO') {$return_val = "P";}
+    elsif($pass_aa eq 'GLN') {$return_val = "Q";}
+    elsif($pass_aa eq 'ARG') {$return_val = "R";}
+    elsif($pass_aa eq 'SER') {$return_val = "S";}
+    elsif($pass_aa eq 'THR') {$return_val = "T";}
+    elsif($pass_aa eq 'VAL') {$return_val = "V";}
+    elsif($pass_aa eq 'TRP') {$return_val = "W";}
+    elsif($pass_aa eq 'TYR') {$return_val = "Y";}
+
+    return $return_val;
+
+}
+
+
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: give name of enzyme. The file despos_6_8_\${enzyme}.txt, containing the design positions, has to be present in the directory, and the files \${enzyme}_des.fasta and \${enzyme}_CatSeq.txt, containing the sequences of the design output and the allowed residues at the individual design positions, respectively, also have to be present.\n";
+  printf STDERR "\n";
+  exit 1;
+}
+
+
+my $enzyme;
+my $mode;
+my $NumDesPos;
+my $NumDesSeqs=0; 
+my @DesPosArray = ();
+my $ScoreHeaderLine;
+my $AllowedResidues;
+my @DesSeqArray = ();
+my @DesFreqArray = ();
+my @CatPosArray = ();
+my $NumCatPos = 0;
+my @CritPosArray = ();
+my $fileloc = "workruns";
+
+
+
+# to do: collect catalytic residues
+#subroutine to read out energy values 
+#
+#every line of the file of interest is saved in the pointer array $DataArray. first element (->[0] is bktot, the next $numdespos elements are the lines for the respective residues, element $NumDesPos+1 is the line for the ligand, after that come the line for the catalytic residues
+sub ReadRosettaOutPDB { 
+    
+    my $CurFile = $_[0];
+    my $DataArray = ();
+    printf STDERR "Reading file $CurFile ...";
+
+    my $GenSummaryReadingFlag = 0;
+    my $ResBlockReadingFlag = 0;
+    my $DesPosCounter = 0;
+    my $CatPosCounter = 0;
+    
+    open(OUTPDB,$CurFile) || die "Can't open $CurFile ";
+    
+    while(<OUTPDB>) {
+	chomp;
+	my $inline = $_;
+	
+	if($inline =~ /ntrials/) {
+	    $GenSummaryReadingFlag = 1;
+	    $ResBlockReadingFlag = 0;
+	}
+	if($inline =~ /^res aa /) {
+	    $GenSummaryReadingFlag = 0;
+	    $ResBlockReadingFlag = 1;
+	    
+	    $DesPosCounter = 0;
+	    $ScoreHeaderLine = $inline;
+    	    printf STDERR "bk_tot read for file %s, = %.2f\n",$CurFile,$DataArray->[0];
+	    
+	}
+	if($inline =~ /^totals /) {
+	    $GenSummaryReadingFlag = 0;
+	    $ResBlockReadingFlag = 0;
+	} 
+
+	
+	if($GenSummaryReadingFlag){
+	    my @LineArray=split(' ',$inline);
+	
+	    if($LineArray[0] eq "bk_tot:") { $DataArray->[0]=$LineArray[1]; }
+
+    	}
+    
+	if($ResBlockReadingFlag){ 
+	    my @LineArray=split(' ',$inline);
+	    if($LineArray[0] == $DesPosArray[$DesPosCounter]) {
+		$DesPosCounter++;
+		$DataArray->[$DesPosCounter] = $inline;
+	    }
+
+	    if($LineArray[0] == $CatPosArray[$CatPosCounter]) {
+		$CatPosCounter++;
+		$DataArray->[$NumDesPos+1+$CatPosCounter] = $inline;
+	    }
+
+	    if($DesPosCounter == $NumDesPos && $LineArray[1] eq "LG1") {
+	    $DataArray->[$NumDesPos+1] = $inline;
+	    }
+
+	    if($DesPosCounter < $NumDesPos && $LineArray[1] eq "LG1") {
+	    die "WARNING: despos_6_8_${enzyme}.txt and $CurFile don't match!!\n";
+	    }
+	}
+
+    }
+
+    return $DataArray;
+
+    close OUTPDB;	
+
+}
+
+#subroutine to test whether the design calculation recovered an allowed residue at a given position
+sub PositionAllowedResidue {
+   
+    #my $Allowed = 0;
+    my $Position = $_[0];
+    my $Residue = $_[1];
+    
+    #printf STDERR "PAR called for position %s and reside %s, allowed residues are %s. ",$Position,$Residue,$AllowedResidues->{$Position};
+    
+if($AllowedResidues->{$Position} =~ /$Residue/) {#printf STDERR "returning 1.\n"; 
+						 return 1;}
+    else {#printf STDERR "returning 0.\n"; 
+	  return 0;}
+    
+}
+
+
+if($#ARGV== -1) {&usage();}
+
+#read in command line
+
+while ($#ARGV>=0) {    # comment: $# means "index to last element of the array
+  if ($ARGV[0] eq "-help" || $ARGV[0] eq "-h") {
+    &usage();
+  } else {
+    $enzyme = shift(@ARGV);
+    $mode = shift(@ARGV);
+    }
+}
+#done reading command line
+
+#read in design positions
+#my $designposfile = "despos_6_8_${enzyme}.txt";
+open(DFILE,"despos_6_8_${enzyme}.txt") || die "Can't open despos file";
+@DesPosArray = split(' ',<DFILE>);
+close DFILE;
+
+$NumDesPos = scalar @DesPosArray;
+#done reading design positions
+
+#---------------------------------------------
+
+#now read in CatSeq file
+open(CSFILE,"${enzyme}_CatSeq.txt") || die "Can't open CatSeq file";
+
+#add catalytic positions to files
+my $CSFILEposcounter = 0;
+my $AllPositionsRead=0;
+my $ResiBlockFlag = 0;
+
+while(<CSFILE>) {
+    my $inline=$_;
+    if($inline =~ /^CatPos:/) { printf STDERR "right here\n";
+	my @tmparray = split(':',$inline);
+	@CatPosArray = split(' ',$tmparray[1]);
+	$NumCatPos = scalar @CatPosArray;
+    }
+
+   
+    if($ResiBlockFlag && !$AllPositionsRead){
+    
+	my @CSFlineArray = split(':',$inline);
+	my @CSFAllowedArray = split('-',$CSFlineArray[1]);
+    
+
+	if ($CSFlineArray[0] != $DesPosArray[$CSFILEposcounter]) { printf STDERR "%f",$CSFlineArray[0]; die "Warning: CatSeq and despos file don't match for ${enzyme}!!  \n";}
+    
+	if($CSFlineArray[0] == $DesPosArray[$NumDesPos-1]) {$AllPositionsRead = 1;}
+	
+	if($CSFAllowedArray[1] eq 'critical') {$CritPosArray[$CSFILEposcounter] = 1;}
+	else {$CritPosArray[$CSFILEposcounter] = 0;}
+
+	$AllowedResidues->{$CSFlineArray[0]}=$CSFAllowedArray[0];
+	#chomp $AllowedResidues->{$CSFlineArray[0]};
+	$CSFILEposcounter++;
+    }
+
+    if($inline =~ /^start/){$ResiBlockFlag = 1; }
+}
+
+close CSFILE;
+printf STDERR "CatSeq file read, last line: %s. Number of CatPos: %s, %s %s\n",$AllowedResidues->{$DesPosArray[$NumDesPos-1]}, $NumCatPos, $CatPosArray[0],$CatPosArray[1];
+
+#cat seq file read.
+
+#-------------------------------------------
+
+#now read in designed sequence distributions and compare with allowed sequences
+ open(DSFILE,"workruns/${enzyme}_des.fasta") || die "Can't open designed sequences fasta file";
+    
+ while(<DSFILE>) {
+    my $DesSeqFileLine=$_;
+    chomp;
+
+    if (substr($DesSeqFileLine,0,1) eq '>') { $NumDesSeqs++;}
+
+    elsif ( substr($DesSeqFileLine,0,1) eq ' ') {}
+
+    else { substr($DesSeqArray[$NumDesSeqs-1],-1) = $DesSeqFileLine;}
+
+ }
+ close DSFILE;
+
+ printf STDERR "${enzyme}: Alignment file with %s designed sequences read. %s\n",$NumDesSeqs, scalar @DesSeqArray;
+#designed sequences read in
+
+#-----------------------------------------------------
+
+#now determine residue distribution in designed sequences
+
+for( my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+
+    #printf STDERR "$DesPosArray[$dcount]\n";
+    my $des_dist={};
+  
+   for(my $scount=0; $scount<$NumDesSeqs; $scount++) {
+	   my $currAA = substr($DesSeqArray[$scount],$DesPosArray[$dcount]-1,1); 
+	   $des_dist->{$currAA}=0 if ( ! defined $des_dist->{$currAA} );
+	   $des_dist->{$currAA}++;
+	   #printf STDERR " $currAA $des_dist->{$currAA},";
+
+    }
+    #printf STDERR " \n \n";
+
+	push(@DesFreqArray,$des_dist);
+    
+}
+printf STDERR "Residue distribution in designed sequences determined...\n";
+#residue distribution determined
+
+#------------------------
+#read in sequence distribution of use_input_sc run
+
+my @UiDesSeqArray = ();
+my $NumUiDesSeqs = 0;
+if (-e "workruns/${enzyme}_des_useisc.fasta") {
+    open(DSFILE,"workruns/${enzyme}_des_useisc.fasta") || die "Can't open use_input_sc designed sequences fasta file";
+    
+    while(<DSFILE>) {
+	my $DesSeqFileLine=$_;
+	chomp;
+
+	if (substr($DesSeqFileLine,0,1) eq '>') { $NumUiDesSeqs++;}
+
+	elsif ( substr($DesSeqFileLine,0,1) eq ' ') {}
+
+	else { substr($UiDesSeqArray[$NumUiDesSeqs-1],-1) = $DesSeqFileLine;}
+
+    }
+    close DSFILE;
+
+    printf STDERR "${enzyme}: Alignment file with %s use_input_sc designed sequences read. %s\n",$NumUiDesSeqs, scalar @UiDesSeqArray;
+}
+
+#designed UI sequences read in, now calculate Ui sidechain distribution
+my @UiDesFreqArray = ();
+
+for( my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+
+    #printf STDERR "$DesPosArray[$dcount]\n";
+    my $des_dist={};
+  
+   for(my $scount=0; $scount<$NumUiDesSeqs; $scount++) {
+	   my $currAA = substr($UiDesSeqArray[$scount],$DesPosArray[$dcount]-1,1); 
+	   $des_dist->{$currAA}=0 if ( ! defined $des_dist->{$currAA} );
+	   $des_dist->{$currAA}++;
+	   #printf STDERR " $currAA $des_dist->{$currAA},";
+
+    }
+    #printf STDERR " \n \n";
+
+	push(@UiDesFreqArray,$des_dist);
+    
+}
+printf STDERR "Residue distribution in use_input_sc designed sequences determined...\n";
+
+#-----------------------------------------------------
+
+#-------------------------------------------
+#read in the scored structure, the repacked structure, and the designed structures
+my $NumMissingFiles = 0;
+my $NumMissingUiFiles = 0;
+my $ScoreDataArray = ();
+my $RepackDataArray = ();
+my @DesDataArray = ();
+my @UiDesDataArray = ();
+
+my $ScoreFile = "${enzyme}_score.pdb";
+my $RepackFile = "${enzyme}_repack.pdb";
+my $ScoreFileLoc = $fileloc."/".$ScoreFile;
+my $RepackFileLoc = $fileloc."/".$RepackFile;
+
+if(-e $ScoreFileLoc){
+    $ScoreDataArray = &ReadRosettaOutPDB($ScoreFileLoc);
+    printf STDERR "Scored structure read...\n";
+}
+else {die "No scored structure for ${enzyme}, quitting.\n";}
+
+if(-e $RepackFileLoc){
+    $RepackDataArray = &ReadRosettaOutPDB($RepackFileLoc);
+    printf STDERR "Repacked structure read...\n";
+}
+else {printf STDERR "No repacked structure for ${enzyme}.\n";}
+
+
+for(my $ii=1; $ii<=$NumDesSeqs; $ii++) {
+    my $convert_ii = &zPad($ii,4);
+    #my $CurDesFile = $fileloc."
+    if(-e $fileloc."/${enzyme}_des_${convert_ii}.pdb"){
+	$DesDataArray[$ii-$NumMissingFiles] = &ReadRosettaOutPDB($fileloc."/${enzyme}_des_${convert_ii}.pdb");
+	printf STDERR "${ii}th designed structure read...\n";
+    }
+    else {printf STDERR "No designed structure #${ii}\n"; $NumMissingFiles++; }
+}
+
+for(my $ii=1; $ii<=$NumUiDesSeqs; $ii++) {
+    my $convert_ii = &zPad($ii,4);
+    #my $CurDesFile = $fileloc."
+    if(-e $fileloc."/${enzyme}_des_useisc_${convert_ii}.pdb"){
+	$UiDesDataArray[$ii-$NumMissingUiFiles] = &ReadRosettaOutPDB($fileloc."/${enzyme}_des_useisc_${convert_ii}.pdb");
+	printf STDERR "${ii}th UI designed structure read...\n";
+    }
+    else { $NumMissingUiFiles++; }
+}
+
+
+#------calculate average bktot for ui designs------------------------------------
+
+my $UIbktot_av = 0;
+my $UIligsum_av = 0;
+
+for(my $kk=1; $kk<=$NumUiDesSeqs - $NumMissingUiFiles; $kk++) {
+    
+    #bktot block
+    $UIbktot_av = $UIbktot_av + $UiDesDataArray[$kk]->[0];
+    
+    #ligand block
+    my @CurDesLigArray = split(' ',$UiDesDataArray[$kk]->[$NumDesPos+1]);
+    $UIligsum_av = $UIligsum_av + $CurDesLigArray[17];
+       
+}
+$UIbktot_av = sprintf("%.2f",$UIbktot_av / ( $NumUiDesSeqs - $NumMissingUiFiles));
+$UIligsum_av = sprintf("%.2f",$UIligsum_av / ( $NumUiDesSeqs - $NumMissingUiFiles));
+
+#-----now calculate the energies of the designed sequences---------------------
+
+my $bktot_min = 10000;
+my $bktot_max = -10000;
+my @bktot_array = ();
+my $bktot_sum = 0;
+
+my $ligsum_min = 10000;
+my $ligsum_max = -10000;
+my @ligsum_array = ();
+my $ligsum_sum = 0;
+my @lighbond_array = ();
+my $lighbond_sum = 0;
+
+#for(my $k=0;k<$NumCatPos;$k++)
+    
+
+for(my $ii=1; $ii<=$NumDesSeqs - $NumMissingFiles; $ii++) {
+    
+    #bktot block
+    $bktot_array[$ii] = $DesDataArray[$ii]->[0];
+    $bktot_sum = $bktot_sum + $DesDataArray[$ii]->[0];
+    if($DesDataArray[$ii]->[0] > $bktot_max) { $bktot_max = $DesDataArray[$ii]->[0];}
+    elsif($DesDataArray[$ii]->[0] < $bktot_min) { $bktot_min = $DesDataArray[$ii]->[0];}
+
+    #ligand block
+    my @CurDesLigArray = split(' ',$DesDataArray[$ii]->[$NumDesPos+1]);
+    $ligsum_array[$ii] = $CurDesLigArray[17];
+    $lighbond_array[$ii] = $CurDesLigArray[10];
+    $ligsum_sum = $ligsum_sum + $CurDesLigArray[17];
+    $lighbond_sum = $lighbond_sum + $CurDesLigArray[10];
+    if($CurDesLigArray[17] > $ligsum_max) { $ligsum_max = $CurDesLigArray[17]; printf STDERR "max lig found, %s %s\n", $ii, $ligsum_max;}
+    elsif($CurDesLigArray[17] < $ligsum_min) { $ligsum_min = $CurDesLigArray[17];}
+
+   
+}
+
+
+$bktot_array[0] = sprintf("%.2f",($bktot_sum / $NumDesSeqs)); #save average in 0 position of array
+my $bktot_sd = -1;
+$bktot_sd = sprintf("%.2f",&StDev(@bktot_array));
+
+$ligsum_array[0] = sprintf("%.2f",($ligsum_sum / $NumDesSeqs)); #save average in 0 position of array
+my $ligsum_sd = -1;
+$ligsum_sd = sprintf("%.2f",&StDev(@ligsum_array));
+
+$lighbond_array[0] = sprintf("%.2f",($lighbond_sum / $NumDesSeqs)); #save average in 0 position of array
+my $lighbond_sd = -1;
+$lighbond_sd = sprintf("%.2f",&StDev(@lighbond_array));
+
+
+  
+  #block for catalytic residues, clumsy implementation, but i don't know if a better one is possible in perl
+my @CatPosSum = ();
+my @CatPosSd = ();
+my @CatPosMax = ();
+my @CatPosMin = ();
+
+for(my $k=0;$k<$NumCatPos;$k++){
+    
+    my $CurCatPos_min = 10000;
+    my $CurCatPos_max = -10000;
+    my @CurCatPos_array = ();
+    my $CurCatPos_sum = 0;
+
+    for(my $ii=1; $ii<=$NumDesSeqs; $ii++) {
+	my @CurCatPosCurDes_array = split(' ',$DesDataArray[$ii]->[$NumDesPos+2+$k]);
+	$CurCatPos_array[$ii] = $CurCatPosCurDes_array[17];
+	$CurCatPos_sum = $CurCatPos_sum + $CurCatPosCurDes_array[17];
+	if($CurCatPosCurDes_array[17] > $CurCatPos_max) { $CurCatPos_max = $CurCatPosCurDes_array[17]; printf STDERR "%s max cat found, %s %s\n",$k, $ii, $CurCatPos_max;}
+	elsif($CurCatPosCurDes_array[17] < $CurCatPos_min) { $CurCatPos_min = $CurCatPosCurDes_array[17];}
+    } 
+ 
+
+    $CurCatPos_array[0] = sprintf("%.2f",($CurCatPos_sum / $NumDesSeqs)); #save average in 0 position of array
+    my $CurCatPos_sd = -1;
+    $CurCatPos_sd = sprintf("%.2f",&StDev(@CurCatPos_array));
+
+    $CatPosSum[$k] = $CurCatPos_array[0];
+    $CatPosSd[$k] = $CurCatPos_sd;
+    $CatPosMax[$k] = $CurCatPos_max;
+    $CatPosMin[$k] = $CurCatPos_min;
+  
+}
+
+#catalytic residues analyzed
+
+
+
+
+#now determine how well the designed sequences fit the catalytically allowed sequence
+
+my $NumWtRecover=0;
+my $NumAllowedRecover=0;
+my @WtRecoverArray = ();
+my @UiWtRecoverArray = ();
+my @AllowedRecoverArray = ();
+my @WtSeq = ();
+my @PlacedResiduesArray = ();
+my @UiPlacedResiduesArray = ();
+my @PreferredResiduesArray = ();
+my $CritNoRecover;
+
+for( my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+
+    my $DesPosWtResi3 = (split(' ',$ScoreDataArray->[$dcount+1]))[1];
+    $WtSeq[$dcount] = &AA_ThreeLetToOneLet($DesPosWtResi3);
+        
+    my $DesPosDist = $DesFreqArray[$dcount];
+    
+    $AllowedRecoverArray[$dcount]=0;
+    $WtRecoverArray[$dcount]=0;
+    $UiWtRecoverArray[$dcount] = 0;
+        
+    foreach my $aa ( keys %{$DesPosDist} ) {
+	
+	$PlacedResiduesArray[$dcount] = $PlacedResiduesArray[$dcount].sprintf("%.2f",(($DesPosDist->{$aa}+0.0)/$NumDesSeqs))." ".$aa.", ";
+
+	if($aa eq $WtSeq[$dcount]) {
+		$WtRecoverArray[$dcount]=(($DesPosDist->{$aa}+0.0)/$NumDesSeqs);
+	    }
+
+	if( (($DesPosDist->{$aa}+0.0)/$NumDesSeqs) >= 0.1 && &PositionAllowedResidue($DesPosArray[$dcount],$aa) ) {
+	    
+	    $AllowedRecoverArray[$dcount]=1;
+	}
+
+    }
+
+    my $UiDesPosDist = $UiDesFreqArray[$dcount];
+
+    foreach my $uiaa ( keys %{$UiDesPosDist} ) {
+	$UiPlacedResiduesArray[$dcount] = $UiPlacedResiduesArray[$dcount].sprintf("%.2f",(($UiDesPosDist->{$uiaa}+0.0)/$NumUiDesSeqs))." ".$uiaa.", ";
+	if($uiaa eq $WtSeq[$dcount]){
+	    $UiWtRecoverArray[$dcount]=(($UiDesPosDist->{$uiaa}+0.0)/$NumUiDesSeqs);
+	}
+    }
+
+    if($AllowedRecoverArray[$dcount]==1) {$NumAllowedRecover++;}
+    if($WtRecoverArray[$dcount] >= 0.1) {$NumWtRecover++;}
+    if($CritPosArray[$dcount] && !$AllowedRecoverArray[$dcount]) { $CritNoRecover = $CritNoRecover." ".$DesPosArray[$dcount];}
+
+}
+
+my $PercWtRecovery = $NumWtRecover / $NumDesPos;
+my $PercAllowedRecovery = $NumAllowedRecover / $NumDesPos;
+
+#percentage recovery of wildtype and allowed sequences determined
+#-------------------------------
+
+
+#now output the sequence results
+printf STDOUT "\n";
+printf STDOUT "Results for ${enzyme}:\n";
+
+printf STDOUT "Position ---allowed------------- Wt-Recovery (UI)--------- Placed-----------------------------------UI Placed ---------- \n";
+
+for( my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+    my $CritString = ' ';
+    if($CritPosArray[$dcount]){$CritString = '*';}
+    my $CurPosString = $WtSeq[$dcount].$DesPosArray[$dcount];
+    printf STDOUT " %s%s    %s %.2f(%.2f)           %s %s\n",&spPad($CurPosString,5),$CritString,&Padsp($AllowedResidues->{$DesPosArray[$dcount]},23),$WtRecoverArray[$dcount],$UiWtRecoverArray[$dcount],&Padsp($PlacedResiduesArray[$dcount],45), $UiPlacedResiduesArray[$dcount];
+} 
+
+printf STDOUT "%.2f Wt recovery, %.2f allowed recovery.\n",$PercWtRecovery,$PercAllowedRecovery;
+
+printf STDOUT "Wildtype not recovered at positions: ";
+for(my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+    if($WtRecoverArray[$dcount] < 0.1) { printf STDOUT "$DesPosArray[$dcount], ";}
+}
+printf STDOUT ".\n";
+
+printf STDOUT "Unallowed residues placed at positions: ";
+for(my $dcount=0; $dcount<$NumDesPos; $dcount++) {
+    if( !$AllowedRecoverArray[$dcount]) { printf STDOUT "$DesPosArray[$dcount], ";}
+}
+printf STDOUT "\nCritical Residues missed at positions: %s\n",$CritNoRecover;
+
+printf STDOUT "\n";
+
+
+#-----------------------------------------
+
+#now output the average bk_tot, ligand and residue energies for the scored, repacked and designed structures and output
+
+#printf STDOUT "bk_tot values:\n";
+#printf STDOUT "%s %s, %s %s. Designs: avg: %s (SD %s), low %s, high %s\n",$ScoreFile,$ScoreDataArray->[0],$RepackFile,$RepackDataArray->[0],$bktot_array[0],$bktot_sd,$bktot_min,$bktot_max; 
+
+
+my @ScoreLigArray = split (' ',$ScoreDataArray->[$NumDesPos+1]);
+my @RepackLigArray = split (' ',$RepackDataArray->[$NumDesPos+1]);
+printf STDOUT "               %s %s design_avg        design_sd, min/max      UIdes_avg\n",&Padsp(substr($ScoreFile,0,-4),18),&Padsp(substr($RepackFile,0,-4),18);
+printf STDOUT "bk_tot            %s %s %s     (%s,%s/%s)   %s\n",&Padsp($ScoreDataArray->[0],18),&Padsp($RepackDataArray->[0],17),$bktot_array[0],$bktot_sd,$bktot_min,$bktot_max,$UIbktot_av;
+printf STDOUT "lig_Etot          %s %s %s     (%s,%s/%s)               %s\n",&Padsp($ScoreLigArray[17],18),&Padsp($RepackLigArray[17],18),$ligsum_array[0],$ligsum_sd,$ligsum_min,$ligsum_max,$UIligsum_av;
+printf STDOUT "lig_hbond         %s %s %s     (%s)\n",&Padsp($ScoreLigArray[10],17),&Padsp($RepackLigArray[10],19),$lighbond_array[0],$lighbond_sd;
+
+for(my $k=0;$k<$NumCatPos;$k++){ 
+
+    my $CurCatString = (split(' ',$ScoreDataArray->[$NumDesPos+2+$k]))[1].$CatPosArray[$k];
+#my @CurCatArray = (
+printf STDOUT "%s %s %s %s    (%s,%s/%s)\n",&Padsp($CurCatString,16),&spPad((split(' ',$ScoreDataArray->[$NumDesPos+2+$k]))[17],5),&spPad((split(' ',$RepackDataArray->[$NumDesPos+2+$k]))[17],17),&spPad($CatPosSum[$k],19),$CatPosSd[$k],$CatPosMin[$k],$CatPosMax[$k];
+
+
+}

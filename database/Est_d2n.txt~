@@ -1,0 +1,29 @@
+#file that determines which atoms of the esterase tyrosine substrate belong to which moiety
+#there are 24 heavyatoms in the ligand
+# moiety A = hydrophobic phenyl group plus reaction center that is to be buried
+# moiety B = leaving group that should point out of the binding pocket
+ATOM    1   A
+ATOM    2   A
+ATOM    3   A
+ATOM    4   A
+ATOM    5   A
+ATOM    6   A
+ATOM    7   B
+ATOM    8   B
+ATOM    9   B
+ATOM   10   A
+ATOM   11   B
+ATOM   12   B
+ATOM   13   B
+ATOM   14   B
+ATOM   15   B
+ATOM   16   B
+ATOM   17   A
+ATOM   18   B
+ATOM   19   B
+ATOM   20   A
+ATOM   21   A
+ATOM   22   A
+ATOM   23   A
+ATOM   24   A
+

@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+
+#script to analyse, i.e. read out the important energy variables, from a list of designed structures. 
+#the energy variables being read are bk_tot and the lines for the catalytic residues + ligand from the residual energy block 
+
+use Math::Complex;
+use strict;
+
+
+
+# to do: collect catalytic residues
+#subroutine to read out energy values 
+#
+#every line of the file of interest is saved in the pointer array $DataArray. first element (->[0] is bktot, the next $numdespos elements are the lines for the respective residues, element $NumDesPos+1 is the line for the ligand, after that come the line for the catalytic residues
+sub ReadRosettaOutPDB { 
+    
+    my $CurFile = $_[0];
+    my @DataArray = ();
+    my @CatRes = ();
+    
+    my $RemarkReadingFlag = 1;
+    my $GenSummaryReadingFlag = 0;
+    my $ResBlockReadingFlag = 0;
+    my $DesPosCounter = 0;
+    my $CatPosCounter = 0;
+    
+    open(OUTPDB,$CurFile) || die "Can't open $CurFile ";
+    printf STDERR "Reading file $CurFile ...";
+
+    while(<OUTPDB>) {
+	chomp;
+	my $inline = $_;
+
+	if($RemarkReadingFlag == 1 && $inline =~ /^ATOM) { $RemarkReadingFlag = 0;}
+	
+	if($inline =~ /ntrials/) {
+	    $GenSummaryReadingFlag = 1;
+	    $ResBlockReadingFlag = 0;
+	}
+	if($inline =~ /^res aa /) {
+	    $GenSummaryReadingFlag = 0;
+	    $ResBlockReadingFlag = 1;
+	    
+	    $DesPosCounter = 0;
+	    $ScoreHeaderLine = $inline;
+    	    printf STDERR "bk_tot read for file %s, = %.2f\n",$CurFile,$DataArray->[0];
+	    
+	}
+	if($inline =~ /^totals /) {
+	    $GenSummaryReadingFlag = 0;
+	    $ResBlockReadingFlag = 0;
+	} 
+
+
+	if($RemarkReadingFlag) {
+	    my @LineArray=split(' ',$inline);
+	    if($LineArray[1] eq "BACKBONE" && $LineArray[2] eq "TEMPLATE") {
+		my $CurCatRes = $LineArray[10];
+		my $CurCatResAlreadyFound = 0;
+		my $CatResArraySize = scalar @CatRes;
+		for(my $ii = 0; $ii < $CatResArraySize; $ii++){
+		    if($CatRes[$ii] eq $CurCatRes) {$CurCatResAlreadyFound = 1;}
+		}
+		if(!$CurCatResAlreadyFound){$CatRes[$CatResArraySize] = $CurCatRes;}
+	    }
+	}
+	
+	if($GenSummaryReadingFlag){
+	    my @LineArray=split(' ',$inline);
+	
+	    if($LineArray[0] eq "bk_tot:") { $DataArray->[0]=$LineArray[1]; }
+
+    	}
+    
+	if($ResBlockReadingFlag){ 
+	    my @LineArray=split(' ',$inline);
+	    if($LineArray[0] == $DesPosArray[$DesPosCounter]) {
+		$DesPosCounter++;
+		$DataArray->[$DesPosCounter] = $inline;
+	    }
+
+	    if($LineArray[0] == $CatPosArray[$CatPosCounter]) {
+		$CatPosCounter++;
+		$DataArray->[$NumDesPos+1+$CatPosCounter] = $inline;
+	    }
+
+	    if($DesPosCounter == $NumDesPos && $LineArray[1] eq "LG1") {
+	    $DataArray->[$NumDesPos+1] = $inline;
+	    }
+
+	    if($DesPosCounter < $NumDesPos && $LineArray[1] eq "LG1") {
+	    die "WARNING: despos_6_8_${enzyme}.txt and $CurFile don't match!!\n";
+	    }
+	}
+
+    }
+
+    return $DataArray;
+
+    close OUTPDB;	
+
+}

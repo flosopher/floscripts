@@ -1,0 +1,9 @@
+REM  Relative accessibilites read from external file "/work/flo/code/naccess/standard.data"
+REM  File of summed (Sum) and % (per.) accessibilities for 
+REM RES _ NUM      All-atoms   Total-Side   Main-Chain    Non-polar    All polar
+REM                ABS   REL    ABS   REL    ABS   REL    ABS   REL    ABS   REL
+HEM LG1     3   489.84 -99.9   0.00 -99.9 489.84 -99.9 424.63 -99.9  65.20 -99.9
+END  Absolute sums over single chains surface 
+CHAIN  1 _      489.8          0.0        489.8        424.6         65.2
+END  Absolute sums over all chains 
+TOTAL           489.8          0.0        489.8        424.6         65.2

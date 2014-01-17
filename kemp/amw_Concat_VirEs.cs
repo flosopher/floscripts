@@ -1,0 +1,31 @@
+#!/bin/tcsh
+
+#first go through all the list of designs
+#echo design ligEfrac TotEfrac > CatGeoExpectVs.ana
+#echo expectvalues > temptest
+#complete list
+#foreach design (KAB KAB_stTS KE_0007_1thf KE_0010_1a53 KE_0015_1thf KE_0016_1thf KE_0035_2izj KE_0001_1eix KE_0002_1eix KE_0003_1thf KE_0004_1thf KE_0005_1lbm KE_0006_1thf  KE_0008_1thf KE_0009_1thf  KE_0011_1a53 KE_0012_148l KE_0013_1thf KE_0014_1thf  KE_0017_1thf KE_0018_1a53 KE_0019_1v04 KE_0020_1lbm KE_0021_1lbl KE_0022_1lbl KE_0023_1a53 KE_0024_1a53 KE_0025_1pii KE_0026_1pii KE_0027_1pii KE_0033_1vo4 KE_0034_1v04  KE_0036_1tsn KE_0037_6cpa KE_0038_1lbm)
+
+#foreach design (KE_0010_1a53 KE_0010_N130I KE_0010_N130L KE_0010_N130V)
+echo design            values > Screen_CatExpectVs_${1}.ana
+
+#foreach design ( amw_1a53_1_F amw_KE_v04_1_F amw_1igs_1_F amw_KE_v04_2_F amw_1dc9_1_F amw_1i4n_1_F amw_1lbm_1_F amw_1thf_1_F )
+
+#echo ${design}_stTS ${design}/${design}_stTS > ${design}list.list
+#echo ${design}_F ${design}/${design}_F > ${design}list.list
+
+#/work/flo/edesign/scripts/DetCloseResidue.pl ${design} cmd >> condor_amw_hack.inp
+#/work/flo/edesign/scripts/amw_DetCloseRes_write_cmd_line.pl ${design} cmd >> condor_amw_hack.inp
+#echo "Initialdir = /users/flo/kempdock/amw"  >> condor_amw_hack.inp
+#echo "Queue 2"  >> condor_amw_hack.inp
+#echo >> condor_amw_hack.inp
+
+#echo design            values > Screen_CatExpectVs_${1}.ana
+
+foreach design(match_10_802_QM_HYP6d_1ifc match_11_100_QM_HSP6d_1thf match_11_101_QM_HSP6d_1thf match_11_120_QM_HYP5d_1ftx match_11_123_QM_HYP5d_1ftx match_11_350_QM_HYP5d_1ftx match_11_93_QM_HSP6d_1thf match_11_95_QM_HSP6d_1thf match_12_33_QM_HYP5d_1lbl match_13_11_QM_HYP5d_1ifc_ match_17_221_QM_HYP6d_1ifc match_17_43_QM_HYP5d_1lbl match_17_44_QM_HYP5d_1lbl match_1_101_QM_HSP6d_1igs match_1_1405_QM_HYP6d_1ifc match_1_164_QM_HYP5d_1cbs_ match_1_1903_QM_HSP6u_1i4n match_1_1968_QM_HSP6u_1i4n match_1_5_QM_HSP5d_1i4n match_1_684_QM_HYP5d_1cbs_ match_1_78_QM_HSP5d_1pvx_ match_1_7_QM_HSP5d_1i4n match_1_81_QM_HSP6d_1igs match_1_82_QM_HSP6d_1igs match_1_8_QM_HSP5d_1i4n match_1_8_QM_HYP6u_1N1Y_ match_20_2_QM_HSP6u_1ifc match_20_9_QM_HSP6u_1ifc match_23_30_QM_HYP5d_1ft match_23_490_QM_HSP5u_1i4n match_23_494_QM_HSP5u_1i4n match_23_495_QM_HSP5u_1i4n match_23_496_QM_HSP5u_1i4n match_23_499_QM_HSP5u_1i4n match_23_506_QM_HSP5u_1i4n match_23_80_QM_HYP6d_1yna match_24_1_QM_HYP6u_1icn_ match_24_3_QM_HYP6u_1icn_ match_26_4_QM_HSP5u_1a53 match_26_7_QM_HSP5u_1a53 match_2_97_QM_HYP6d_1cbs_ match_2_9_QM_HYP6d_1dc9 match_2_9_QM_HYP6u_1N1V_ match_3_26_QM_HSP6d_1li match_3_55_QM_HSP6d_1li match_3_59_QM_HSP6d_1li match_3_71_QM_HYP5d_1ftx match_3_73_QM_HSP6u_1lic match_3_82_QM_HSP6u_1lic match_3_85_QM_HSP6u_1lic match_3_986_QM_HYP5d_1a53_ match_3_990_QM_HYP5d_1a53_ match_44_1_QM_HYP6u_1ftx match_45_3_QM_HYP6u_1ftx match_45_5_QM_HYP6u_1ftx match_54_3_QM_HSP5u_1igs match_54_4_QM_HSP5u_1igs match_54_6_QM_HSP5u_1igs match_5_1_QM_HYP6d_1dc9 match_5_7_QM_HYP6d_1dc9 match_5_8_QM_HSP5d_1li match_60_37_QM_HSP5u_1ifc match_60_43_QM_HSP5u_1ifc match_7_11_QM_HYP6u_1N1V_ match_7_7_QM_HYP6u_1N1V_ match_9_94_QM_HSP6u_1i4n match_9_98_QM_HSP6u_1i4n match_9_99_QM_HSP6u_1i4n match_26_16_QM_HSP5u_1a53 ) 
+
+
+/work/flo/edesign/scripts/kemp/amw_CalcVirE.pl $design $1 >> Screen_CatExpectVs_${1}.ana
+
+end
+

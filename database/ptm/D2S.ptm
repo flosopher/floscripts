@@ -1,0 +1,15 @@
+#this file contains information about what names in mini
+#correspond to what atom id in the r++ hetatm file for 
+#the D2N substrate
+#format id(r++) [spaces] name(mini)
+NAME EST D2S
+ATOM_MAP_START
+1   C2
+2   C1
+3   C3
+4   O1
+5   O2
+6   REMOVE
+7   REMOVE
+8   REMOVE
+ATOM_MAP_END

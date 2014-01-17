@@ -1,0 +1,31 @@
+#table that contains info on which atom types in FA are 
+#equivalent to which atom types in centroid
+#atom_type_fa atom_type_centroid
+CNH2   CObb
+COO    CObb
+CH1    CAbb
+CH2    CB
+CH3    CAbb
+aroC   CObb
+Ntrp   Nbb
+NH2O   Nbb
+Nlys   Nbb
+Narg   Nbb
+Npro   Nbb
+Nhis   Nbb
+OH     OCbb
+ONH2   OCbb
+OOC    OCbb
+Oaro   OCbb
+S      OCbb
+Nbb    Nbb
+CAbb   CAbb
+CObb   CObb
+OCbb   OCbb
+Phos   CB
+Hpol   HNbb
+Haro   DELETE
+HNbb   HNbb
+Hapo   DELETE
+VIRT   VIRT
+Zn2p   CAbb

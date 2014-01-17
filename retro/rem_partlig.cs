@@ -1,0 +1,20 @@
+#!/bin/tcsh
+
+#first go through all the list of designs
+foreach design (RA_0001_1a53 RA_0002_1tsn RA_0003_1nah RA_0005_1a53 RA_0006_1lbl RA_0014_1lbf RA_0015_1gca RA_0017_1thf RA_0019_1thf_1 RA_0022_1lbf RA_0024_1b9b )
+#
+#alternatively foreach desing (`cat list`)
+#
+# now write the temporary 'molecule' superpositioning scrip
+
+grep REMARK ${design}_ofrag_min.pdb > ${design}_singleO.pdb
+grep "ATOM "  ${design}_ofrag_min.pdb >> ${design}_singleO.pdb
+grep aroC ${design}_ofrag_min.pdb > tempfile
+tail -1 tempfile >> ${design}_singleO.pdb
+cat SingleOtemplate.cst >> ${design}_singleO.pdb
+
+echo END >> ${design}_singleO.pdb
+
+rm tempfile
+	
+end

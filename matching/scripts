@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+#script to superimpose a probe molecule onto a target molecule. 3 atoms have to be specified, these 3 atoms have to be in the 
+#same line in the files of the two molecules
+
+
+use strict;
+
+
+sub usage {
+  printf STDERR "\n";
+  printf STDERR "usage: <probe> <target> <line# at1> <line# at2> <line# at3>\n Note: the three atoms have to be on the same lines in the respective fils";
+  printf STDERR "\n";
+  exit 1;
+}
+
+

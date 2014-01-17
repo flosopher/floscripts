@@ -1,0 +1,64 @@
+ ACCALL - Accessibility calculations
+ MAX RESIDUES     5000
+ MAX ATOMS/RES     100
+ PDB FILE INPUT clean.pdb
+ PROBE SIZE       1.40
+ Z-SLICE WIDTH   0.050
+ VDW RADII FILE /work/flo/code/naccess/vdw.radii
+ INCL HETATOMS
+ EXCL HYDROGENS
+ EXCL WATERS
+ READVDW  32 residues input
+ UNKNOWN residue type.............> LG1     3 
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| O  | in residue> LG1     3 
+ ASSUMED vdw of  O   in LG1     3  =  1.40 (same as ALA)
+ NON-STANDARD atom.| O  | in residue> LG1     3 
+ ASSUMED vdw of  O   in LG1     3  =  1.40 (same as ALA)
+ NON-STANDARD atom.| C  | in residue> LG1     3 
+ ASSUMED vdw of  C   in LG1     3  =  1.76 (same as ALA)
+ NON-STANDARD atom.| O  | in residue> LG1     3 
+ ASSUMED vdw of  O   in LG1     3  =  1.40 (same as ALA)
+ ADDED VDW RADII
+ CHAINS       1
+ RESIDUES     1
+ ATOMS       22
+ SOLVA: PROGRAM ENDS CORRECTLY
+ CALCULATED ATOMIC ACCESSIBILITES
+ RELATIVE (STANDARD) ACCESSIBILITIES READFOR  20 AMINO ACIDS
+ SUMMED ACCESSIBILITIES OVER RESIDUES
