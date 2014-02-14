@@ -13,12 +13,14 @@ import PrimerTMCalculator
 MIN_Tm = 55.0 #the minimum annealing temp for designed primers
 MAX_NON_PROBLEMATIC_TM = 69
 MAX_P_LENGTH = 32 #maximum allowed length of the primer
-MIN_P_LENGTH = 17
+MIN_P_LENGTH = 18
 TM_DIFF_PROBLEMATIC_INCREMENT = 5.0
 
-ADD_LINKERS = 0
-FWD_LINKER = "ATGGGGCCTCT"
-REV_LINKER = "TGCCGCCGGCGCC"
+ADD_LINKERS = 1
+FWD_LINKER = "CGTAGGGTCGACT"
+REV_LINKER = "CGGAAAGGCGGCCGC"
+
+CONVERT_SITE_LIST = 1  #in case a list is read in, it can be converted (i.e. convert a list of amino acid positions to nucleotide positions
 
 tm_calculator = PrimerTMCalculator.TM_Calculator()
 codon_mapper = GeneticCodeAAConverter()
@@ -168,7 +170,7 @@ def calculate_statistics( primer_pairs ):
     melt_temps = []
     melt_diffs = []
     T_increment = 2.5
-    cost_per_base = 0.13
+    cost_per_base = 0.10
 
     fwd_linker_len = 0
     rev_linker_len = 0
@@ -348,6 +350,24 @@ def create_insertion_site_list( first_nt, last_nt, num_primers):
 
     return insertion_site_list
 
+def read_insertion_site_list( filename ):
+
+    to_return = [];
+
+    filename = filename.replace("\n","")
+    fileh = open(filename, 'r')
+    filelines = fileh.readlines()
+    fileh.close()
+
+    for line in filelines:
+        line_items = line.split();
+        for litem in line_items:
+            this_pos = int( litem)
+            if CONVERT_SITE_LIST == 1:
+                this_pos = 3 * this_pos + 382
+            to_return.append( this_pos )
+    return to_return
+    
 
 #function that'll make sure no insertion sites are between two hydrophobic residues
 #note: won't touch last or first residue
@@ -435,6 +455,7 @@ num_primers = 0
 sort_by_tm = ''
 consider_tm_difference = 0
 consider_hydrophobicity = 0
+position_file_name =''
 
 CommandArgs = sys.argv[1:]
 
@@ -455,11 +476,15 @@ for arg in CommandArgs:
         consider_hydrophobicity = 1
     elif arg == '-add_linkers':
         ADD_LINKERS = 1
+    elif arg == '-positions':
+        position_file_name = CommandArgs[CommandArgs.index(arg)+1]
+        print "huurz"
+        print position_file_name
         
 
 
-if( (filename == '') or (first_nt == 0) or (last_nt == 0) or (num_primers == 0)  ):
-     print 'Error, please specify filename, first and last nt, and number of primers'
+if( (filename == '') or ( ((first_nt == 0) or (last_nt == 0)  or (num_primers == 0)) and (position_file_name=='') )  ):
+     print 'Error, please specify filename, first and last nt or a position file, and number of primers'
      sys.exit()
 
 
@@ -467,11 +492,17 @@ if( (filename == '') or (first_nt == 0) or (last_nt == 0) or (num_primers == 0) 
 sequence = read_dna_seq_from_gb_file( filename )
 #print "the following sequence was obtained: "
 #print sequence
-
+insertion_site_list = []
 #first we create a list of where to ideally place the desired number of primers
-insertion_site_list = create_insertion_site_list( first_nt, last_nt, num_primers)
-if consider_hydrophobicity == 1:
-    insertion_site_list = modify_insertion_site_list_according_to_hydrophobicity( insertion_site_list, sequence )
+if position_file_name == '':
+    insertion_site_list = create_insertion_site_list( first_nt, last_nt, num_primers)
+    if consider_hydrophobicity == 1:
+        insertion_site_list = modify_insertion_site_list_according_to_hydrophobicity( insertion_site_list, sequence )
+else:
+    insertion_site_list = read_insertion_site_list( position_file_name )
+    print "Read the following positions from disk:"
+    print insertion_site_list
+        
 
 #sanity check
 for i in range( len( insertion_site_list) - 1 ):
@@ -494,8 +525,10 @@ for site in insertion_site_list:
     #primer_pair.print_contents()
     num_probs_orig = primer_pair.get_num_problems()
     #print "initial pair has %s problems" %num_probs_orig
-    if num_probs_orig  == 0:
+    if ((num_probs_orig  == 0) or (position_file_name != '' ) ):
         primer_pairs.append( primer_pair )
+        if( num_probs_orig == 0 ):
+            problematic_sites.append( site )
         continue
 
     else:
