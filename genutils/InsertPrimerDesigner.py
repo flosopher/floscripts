@@ -12,7 +12,7 @@ import PrimerTMCalculator
 
 MIN_Tm = 55.0 #the minimum annealing temp for designed primers
 MAX_NON_PROBLEMATIC_TM = 69
-MAX_P_LENGTH = 32 #maximum allowed length of the primer
+MAX_P_LENGTH = 36 #maximum allowed length of the primer
 MIN_P_LENGTH = 18
 TM_DIFF_PROBLEMATIC_INCREMENT = 5.0
 
@@ -447,6 +447,36 @@ def modify_insertion_site_list_according_to_hydrophobicity( list, sequence ):
     return to_return_list
         
 
+def return_plate_well_from_number( number ):
+    number_int = int( number )
+    row = (number_int / 12) + 1
+    column_int = number_int % 12 
+    if column_int == 0:
+        row = row - 1
+        column_int = 12
+    column = str( column_int )
+
+    if row == 1:
+        return 'A'+ column
+    elif row == 2:
+        return 'B'+ column
+    elif row == 3:
+        return 'C'+ column
+    elif row == 4:
+        return 'D'+ column
+    elif row == 5:
+        return 'E'+ column
+    elif row == 6:
+        return 'F'+ column
+    elif row == 7:
+        return 'G'+ column
+    elif row == 8:
+        return 'H'+ column
+
+    else:
+        print "passed in number %s seems to be bigger than 96" % number
+        sys.exit()
+
 
 seq_filename = ''
 first_nt = 0
@@ -629,18 +659,19 @@ for item in primer_pairs:
     fwd_name = ""
     rev_name = ""
     site_str = str(item.this_site())
+    plate_loc = return_plate_well_from_number( i_in_plate )
     if( item.this_site() ) < 1000:
         site_str = "0"+site_str
     if ADD_LINKERS == 0:
         fwd_name = "dCL_s"+site_str+"_gc_fwd"
         rev_name = "dCL_s"+site_str+"_gc_rev"
-        fwd_plate_string = fwd_plate_string + "%s_%s %s %s\n"%(plate, i_in_plate, fwd_name, item.get_fwd_primer())
-        rev_plate_string = rev_plate_string + "%s_%s %s %s\n"%(plate + 1, i_in_plate, rev_name, item.get_rev_primer())
+        fwd_plate_string = fwd_plate_string + "%s %s %s %s %s\n"%(plate, plate_loc, i_in_plate, fwd_name, item.get_fwd_primer())
+        rev_plate_string = rev_plate_string + "%s %s %s %s %s\n"%(plate + 1,plate_loc, i_in_plate, rev_name, item.get_rev_primer())
     else:
         fwd_name = "dCL_s"+site_str+"_re_fwd"
         rev_name = "dCL_s"+site_str+"_re_rev"
-        fwd_plate_string = fwd_plate_string + "%s_%s %s %s\n"%(plate, i_in_plate, fwd_name, FWD_LINKER+item.get_fwd_primer())
-        rev_plate_string = rev_plate_string + "%s_%s %s %s\n"%(plate + 1, i_in_plate, rev_name, REV_LINKER+item.get_rev_primer())
+        fwd_plate_string = fwd_plate_string + "%s %s %s %s %s\n"%(plate, plate_loc, i_in_plate, fwd_name, FWD_LINKER+item.get_fwd_primer())
+        rev_plate_string = rev_plate_string + "%s %s %s %s %s\n"%(plate + 1, plate_loc, i_in_plate, rev_name, REV_LINKER+item.get_rev_primer())
 
          
     print "Pair %s: At site %s, fwd is %s and rev is %s. Fwd_tm=%.2f, Rev_tm=%.2f diff_tm=%.2f."%(i, item.this_site(), item.get_fwd_primer(), item.get_rev_primer(), item.get_fwd_tm(), item.get_rev_tm(), item.get_tm_difference() )
