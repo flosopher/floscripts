@@ -71,7 +71,6 @@ num_series_to_fit = excel_sheet.num_extracted_series()
 for i in range (num_series_to_fit):
     current_data_series = excel_sheet.return_data_series( i )
     series_length =  current_data_series.num_series_elements()
-    #print "For series %s, aguess is %s and bguess is %s, while series is:" %(current_data_series.name, aguess, bguess )
     #current_data_series.show()
 
     #we have to convert the lists to numpy arrays
@@ -84,6 +83,7 @@ for i in range (num_series_to_fit):
     if fit_function == 1:
         bguess = (current_data_series.get_series_for_index(1))[series_length-1]
         aguess = ((current_data_series.get_series_for_index(1))[0]) - bguess
+        #print "For series %s, aguess is %s and bguess is %s, while series is:" %(current_data_series.name, aguess, bguess )
         kguess = 0.03
         parameters0 = [ aguess, kguess, bguess ]
         #opt_params = leastsq(single_exponential_residuals, parameters0, args=(current_data_series.data_lists[1], current_data_series.data_lists[0] ) )
@@ -98,7 +98,8 @@ for i in range (num_series_to_fit):
             #print opt_params
             #print opt_params[0]
             #print opt_params[0][0]
-        print "For series %s, optk is %.4f (optA=%.4f, optB=%.4f, sum_residual_sq=%.7f)." % (current_data_series.name, opt_params[0][1], opt_params[0][0], opt_params[0][2], sum_residual_sq )
+        justified_name = (current_data_series.name +",").ljust(15)
+        print "For series %s optk = %.4f, tau = %.2f (optA=%.4f, optB=%.4f, sum_residual_sq=%.7f, first value=%.3f)." % (justified_name, opt_params[0][1], (0.69315 / opt_params[0][1]),  opt_params[0][0], opt_params[0][2], sum_residual_sq, ((current_data_series.get_series_for_index(1))[0]) )
 
     elif fit_function == 2:
         Aguess = exp( 20 )

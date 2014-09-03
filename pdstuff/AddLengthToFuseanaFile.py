@@ -34,8 +34,9 @@ outstring = ""
 
 for line in lines:
     tokens = line.split()
-    if tokens[0] != "FUSEANALYSIS":
-        outstring = outstring + append( line )
+    if tokens[0][0:5] != "scanr":
+        #outstring = outstring + append( line )
+	outstring = outstring + line
         continue
     length_nums = tokens[1].split('_')
     n_num = int( length_nums[0] )
