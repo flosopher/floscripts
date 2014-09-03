@@ -57,14 +57,19 @@ def AA3LetTo1Let(aa):
 
 class SequenceProfile:
 
-    def __init__(self, res_input, external_template):
+    def __init__(self, res_input, external_template, wt_sequence = ''):
         self.wt_pos = []
         self.num_sequences = 0
         self.mutations = {}
         self.external_template = external_template
 
-        for res in res_input:
-            self.wt_pos.append( AA3LetTo1Let(res_input[res]['type']) )
+        if wt_sequence == '':
+            for res in res_input:
+                self.wt_pos.append( AA3LetTo1Let(res_input[res]['type']) )
+        else:
+            seq_length = len( wt_sequence )
+            for i in range( seq_length ):
+                self.wt_pos.append( wt_sequence[i] )
 
 
     def add_struct( self, res_coords ):
@@ -91,6 +96,52 @@ class SequenceProfile:
 
             elif self.mutations.has_key( i ):
                 self.mutations[i][self.wt_pos[i]] = self.mutations[i][self.wt_pos[i]] + 1
+
+
+    def add_sequence( self, seq_to_add ):
+        this_length = len( seq_to_add )
+        if  this_length != len( self.wt_pos ):
+            print "Error: input sequence and wt sequence doen't have the same length."
+            sys.exit()
+
+        self.num_sequences = self.num_sequences + 1
+        for i in range( this_length ):
+            this_res = seq_to_add[i]
+
+            if this_res != self.wt_pos[ i ]:
+
+                if not self.mutations.has_key( i ):
+                    self.mutations[ i ] = {}
+                    self.mutations[i][self.wt_pos[i]] = self.num_sequences - 1
+
+                if not self.mutations[i].has_key( this_res ):
+                    self.mutations[i][this_res] = 0
+
+                self.mutations[i][this_res] = self.mutations[i][this_res] + 1 
+                                      
+            elif self.mutations.has_key( i ):
+                self.mutations[i][this_res] = self.mutations[i][this_res] + 1
+
+
+    def get_string_for_position( self, pos ):
+
+        to_return = ''
+        if self.mutations.has_key( pos ):
+
+            if( self.external_template ):
+                to_return = to_return + self.wt_pos[pos] + str(pos+1) + ": "
+            else:
+                to_return = to_return + str(pos+1) + ": "
+
+            for res in self.mutations[pos]:
+                if( self.mutations[pos][res] == 0 ):
+                    continue
+                freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
+                to_return = to_return + "%.2f " % freq + res + ",  "
+
+        return to_return
+
+    
 
     def get_outstring( self ):
 
