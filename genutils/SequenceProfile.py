@@ -147,25 +147,15 @@ class SequenceProfile:
 
         outstring = ""
         for i in range( len( self.wt_pos ) ):
+            
             if self.mutations.has_key( i ):
-                if( self.external_template ):
-                    outstring = outstring + self.wt_pos[i] + str(i+1) + ": "
-                else:
-                    outstring = outstring + str(i+1) + ": "
-
-                for res in self.mutations[ i ]:
-                    if( self.mutations[i][res] == 0 ):
-                        continue
-                    freq = float(self.mutations[ i ][res]) / float( self.num_sequences )
-                    #outstring = outstring + str( freq ) + " " + res + ",  "
-                    outstring = outstring + "%.2f " % freq + res + ",  "
-
-                outstring = outstring + "\n"
+                outstring = outstring + self.get_string_for_position( i ) + "\n"
 
         if outstring == "":
             outstring = "no mutations found"
 
         return outstring
+
 
     def get_pymutstring( self ):
         pymutstring = "select mutations, resi "
