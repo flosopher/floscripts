@@ -127,7 +127,8 @@ class SequenceProfile:
     def get_observed_res_for_position(self, pos):
         to_return = []
         for res in self.mutations[pos]:
-            to_return.append( res )
+            if self.mutations[pos][res] != 0:
+                to_return.append( res )
         return to_return
 
     def get_string_for_position( self, pos ):
@@ -141,21 +142,27 @@ class SequenceProfile:
             else:
                 to_return = to_return + str(pos+1) + ": "
 
-            for res in self.mutations[pos]:
-                if( self.mutations[pos][res] == 0 ):
-                    continue
-                #print "aa %s is present %s times" % (res, self.mutations[ pos ][res])  
-                freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
-                to_return = to_return + "%.2f " % freq + res + ",  "
+            residues = self.get_observed_res_for_position( pos )
+
+            to_return = to_return + self.get_string_for_position_and_res( pos, residues )
 
         else:
             if( self.external_template ):
                 to_return =  self.wt_pos[pos] + str(pos+1) + ": 1.00 " + self.wt_pos[pos]
             else:
                 to_return = str(pos+1) + ": 1.00 " + self.wt_pos[pos]
-            
+
         return to_return
 
+
+    def get_string_for_position_and_res( self, pos, residues ):
+        to_return = ''
+        for res in residues:
+            freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
+            to_return = to_return + "%.2f " % freq + res + ",  "
+
+        return to_return
+    
     
 
     def get_outstring( self ):
