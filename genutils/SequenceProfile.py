@@ -70,6 +70,7 @@ class SequenceProfile:
             seq_length = len( wt_sequence )
             for i in range( seq_length ):
                 self.wt_pos.append( wt_sequence[i] )
+                self.num_sequences = 1
 
 
     def add_struct( self, res_coords ):
@@ -123,9 +124,16 @@ class SequenceProfile:
                 self.mutations[i][this_res] = self.mutations[i][this_res] + 1
 
 
+    def get_observed_res_for_position(self, pos):
+        to_return = []
+        for res in self.mutations[pos]:
+            to_return.append( res )
+        return to_return
+
     def get_string_for_position( self, pos ):
 
         to_return = ''
+        #print "getting string for pos %s, there are %s sequences" % (pos, self.num_sequences)
         if self.mutations.has_key( pos ):
 
             if( self.external_template ):
@@ -136,9 +144,16 @@ class SequenceProfile:
             for res in self.mutations[pos]:
                 if( self.mutations[pos][res] == 0 ):
                     continue
+                #print "aa %s is present %s times" % (res, self.mutations[ pos ][res])  
                 freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
                 to_return = to_return + "%.2f " % freq + res + ",  "
 
+        else:
+            if( self.external_template ):
+                to_return =  self.wt_pos[pos] + str(pos+1) + ": 1.00 " + self.wt_pos[pos]
+            else:
+                to_return = str(pos+1) + ": 1.00 " + self.wt_pos[pos]
+            
         return to_return
 
     
