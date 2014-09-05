@@ -137,10 +137,10 @@ class SequenceProfile:
         #print "getting string for pos %s, there are %s sequences" % (pos, self.num_sequences)
         if self.mutations.has_key( pos ):
 
-            if( self.external_template ):
-                to_return = to_return + self.wt_pos[pos] + str(pos+1) + ": "
-            else:
-                to_return = to_return + str(pos+1) + ": "
+            # if( self.external_template ):
+            #  to_return = to_return + self.wt_pos[pos] + str(pos+1) + ": "
+            #else:
+            #    to_return = to_return + str(pos+1) + ": "
 
             residues = self.get_observed_res_for_position( pos )
 
@@ -157,8 +157,23 @@ class SequenceProfile:
 
     def get_string_for_position_and_res( self, pos, residues ):
         to_return = ''
+
+        if( self.external_template ):
+            to_return = to_return + self.wt_pos[pos] + str(pos+1) + ": "
+        else:
+            to_return = to_return + str(pos+1) + ": "
+
+        if not self.mutations.has_key( pos ):
+            freq = 0.000
+            for res in residues:
+                to_return = to_return + "%.2f " % freq + res + ",  "
+            return to_return
+
         for res in residues:
-            freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
+            #print "MEEP pos %s and res %s" % (pos, res )
+            freq = 0.000
+            if self.mutations[pos].has_key( res ):
+                freq = float(self.mutations[ pos ][res]) / float( self.num_sequences )
             to_return = to_return + "%.2f " % freq + res + ",  "
 
         return to_return

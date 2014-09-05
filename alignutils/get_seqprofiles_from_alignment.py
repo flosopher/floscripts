@@ -86,7 +86,10 @@ for pos in relevant_pos:
     if mutpos == 0:
         outstring = outstring + all_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n'
     else:
-        outstring = outstring + "All: " + all_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n'+mutstring+": " + sub_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n\n'
+        relevant_res = all_seq_prof.get_observed_res_for_position( int(pos) - 1 )
+        #print "relevant res for pos %s are:" % pos
+        #print relevant_res
+        outstring = outstring + "All:  " + all_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n'+mutstring+": " + sub_seq_prof.get_string_for_position_and_res( (int(pos) - 1), relevant_res ) + '\n\n'
         
 
 print outstring
