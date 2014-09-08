@@ -164,8 +164,10 @@ class SequenceProfile:
             to_return = to_return + str(pos+1) + ": "
 
         if not self.mutations.has_key( pos ):
-            freq = 0.000
             for res in residues:
+                freq = 0.000
+                if res == self.wt_pos[pos]:
+                    freq = 1.000
                 to_return = to_return + "%.2f " % freq + res + ",  "
             return to_return
 
