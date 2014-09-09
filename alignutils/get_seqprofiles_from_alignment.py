@@ -15,7 +15,7 @@ mutchar = ''
 mutstring = ''
 empty_dict = {}
 pdbfile = ''
-cutoff_sq = 64.0
+cutoff_sq = 100.0
 
 def get_ca_ca_dist_sq( res1, res2):
     res1ca = res1['CA']
@@ -173,9 +173,13 @@ outstring = ''
 
 #print "relevant pos are"
 #print relevant_pos
-sub_seq_prof = 0
+wt_sub_seq_prof = 0
+mut_sub_seq_prof = 0
+wtstring_mutpos = all_seq_prof.get_wt_res( mutpos-1) + str( mutpos ) 
+
 if mutpos > 0:
-    sub_seq_prof = create_subprofile( mutpos-1, mutchar, alf_lines )
+    wt_sub_seq_prof = create_subprofile( mutpos-1, all_seq_prof.get_wt_res( mutpos-1), alf_lines )
+    mut_sub_seq_prof = create_subprofile( mutpos-1, mutchar, alf_lines )
 
     
 for pos in relevant_pos:
@@ -185,7 +189,7 @@ for pos in relevant_pos:
         relevant_res = all_seq_prof.get_observed_res_for_position( int(pos) - 1 )
         #print "relevant res for pos %s are:" % pos
         #print relevant_res
-        outstring = outstring + "All:  " + all_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n'+mutstring+": " + sub_seq_prof.get_string_for_position_and_res( (int(pos) - 1), relevant_res ) + '\n\n'
+        outstring = outstring + "All:  " + all_seq_prof.get_string_for_position( int(pos) - 1 ) + '\n'+ wtstring_mutpos+": " + wt_sub_seq_prof.get_string_for_position_and_res( (int(pos) - 1), relevant_res ) + '\n' + mutstring+": " + mut_sub_seq_prof.get_string_for_position_and_res( (int(pos) - 1), relevant_res ) + '\n\n'
         
 
 print outstring

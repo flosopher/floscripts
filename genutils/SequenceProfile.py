@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 
-#my first python script:)
-#reads in a list of backrub output files, calculates the CA RMSD of the backrub portion, and ranks by energy
+#class to generate sequence profiles for positions of interest
+#can be instantiated from a list fo structures or from an alignment
 
 import sys
 import re
@@ -72,7 +72,9 @@ class SequenceProfile:
                 self.wt_pos.append( wt_sequence[i] )
                 self.num_sequences = 1
 
-
+    def get_wt_res( self, pos ):
+        return self.wt_pos[pos]
+    
     def add_struct( self, res_coords ):
 
         if len( res_coords ) != len( self.wt_pos ):
@@ -126,6 +128,10 @@ class SequenceProfile:
 
     def get_observed_res_for_position(self, pos):
         to_return = []
+        if not self.mutations.has_key(pos):
+            to_return.append( self.wt_pos[pos] )
+            return to_return
+        
         for res in self.mutations[pos]:
             if self.mutations[pos][res] != 0:
                 to_return.append( res )
