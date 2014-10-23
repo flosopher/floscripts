@@ -7,6 +7,8 @@ from ReadDNASeqs import read_dna_seq_from_gb_file
 from ReadDNASeqs import GeneticCodeAAConverter
 import PrimerTMCalculator
 
+from primer_design_utils import reverse_complement
+
 #script to read in a DNA sequence, first and last nucleotide between which to design primers,
 #number of primers to design, and then automatically design those primers
 
@@ -25,26 +27,7 @@ CONVERT_SITE_LIST = 1  #in case a list is read in, it can be converted (i.e. con
 tm_calculator = PrimerTMCalculator.TM_Calculator()
 codon_mapper = GeneticCodeAAConverter()
 
-def reverse_complement( sequence ):
-    rev_comp_list = []
-    length = len( sequence )
-    for i in range( length ):
-        cur_char = sequence[length - i -1]
-        #print "at i=%s, char to check is %s"%(i, cur_char)
-        if( cur_char == 'A' ):
-            rev_comp_list.append('T')
-        elif( cur_char == 'C' ):
-            rev_comp_list.append('G')
-        elif( cur_char == 'G' ):
-            rev_comp_list.append('C')
-        elif( cur_char == 'T' ):
-            rev_comp_list.append('A')
-        else:
-            print "Error: When making reverse_complement, Sequence contained a '"+cur_char+"' character at position %s, quitting..."%(i+1)
-            sys.exit()
-    #print "rev complemnt: %s of length %s got turned into"%(sequence, length)
-    #print rev_comp_list
-    return "".join( rev_comp_list )
+
 
 #simple function to check whether a certain amino acid is hydrophobic
 def is_hydrophobic( aa1let ):
