@@ -7,7 +7,7 @@ from ReadDNASeqs import read_dna_seq_from_gb_file
 from ReadDNASeqs import GeneticCodeAAConverter
 import PrimerTMCalculator
 
-from primer_design_utils import reverse_complement
+from primer_design_utils import reverse_complement, generate_histogram, num_primer_problems, read_insertion_site_list
 
 #script to read in a DNA sequence, first and last nucleotide between which to design primers,
 #number of primers to design, and then automatically design those primers
@@ -120,32 +120,6 @@ class PrimerPair:
     def print_contents(self):
         print "This pair at site %s has fwd primer %s, rev primer %s, %s problems and impossible is %s."%(self.site, self.fwd_primer, self.rev_primer, self.num_problems, self.impossible)
 
-#function to generate a histogram from a list of values
-#returns a string for now
-def generate_histogram( list, increment ):
-    returnstring = ''
-    list.sort()
-    low_val = list[0]
-    cur_bin = (int( low_val / 1 ) ) * 1.0
-    cur_bin_count = 0
-
-    for i in list:
-        #print "i is %s and cur_bin is %s"%(i, cur_bin)
-        if (i - cur_bin ) <=increment:    #used to be if (i % cur_bin ) <=increment
-            cur_bin_count = cur_bin_count + 1
-        else:
-            returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, cur_bin_count)
-            cur_bin = float( cur_bin + increment )
-            #print "maap setting curbin to %.2f" % cur_bin
-            while (i - cur_bin ) >= increment:
-                returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, 0)
-                cur_bin = float( cur_bin + increment )
-                #print "moop setting curbin to %.2f" % cur_bin
-                
-            cur_bin_count = 1
-    returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, cur_bin_count)
-
-    return returnstring
 
 #function to calculate a bunch of statistics on a list containing instances of the above class
 def calculate_statistics( primer_pairs ):
@@ -193,46 +167,6 @@ def calculate_statistics( primer_pairs ):
     return returnstring
 
 
-#very important function
-#returns an integer that's supposed to
-#reflect the quality of the primer
-#return value of 0 means primer is 'perfect'
-#for every problem, the return value gets implemented by 1
-#current problems:
-#1. TM stuff: superproblem TM too low, problem Tm too high
-#2. at least 2 AT need to be in the last 5 nucleotides
-#3. the last two nucleotides need to be a G or C
-#4. superproblem: last nucleotide needs to be G or C, if not, increment by 10 and leave
-#function could also be adapted to measure GC content and other stuff
-def num_primer_problems( sequence ):
-    #print "checking problems of sequence %s" % sequence
-    tm = tm_calculator.calculate_tm( sequence )
-    if tm < MIN_Tm:
-        #print "tm is %.2f, returning 10" %tm
-        return 10
-    
-    num_problems = 0
-    if tm > MAX_NON_PROBLEMATIC_TM:
-        num_problems = num_problems + 1
-
-    
-    length = len( sequence )
-    last_5_nt = sequence[length - 5: length]
-    #print "last_5_nt are %s" % last_5_nt
-    if (last_5_nt[4] == 'A' ) or (last_5_nt[4] == 'T' ):
-        #print "returning because last nt is a or t"
-        return 10
-    if (last_5_nt[3] == 'A' ) or (last_5_nt[3] == 'T' ): #in combination with previous if statement, ensures last 2 is g/c
-        num_problems = num_problems + 1
-
-    at_count = 0
-    for i in range(4):
-        if (last_5_nt[i] == 'A' ) or (last_5_nt[i] == 'T' ):
-            at_count = at_count + 1
-    if at_count < 2:
-        num_problems = num_problems + 1
-    #print "returning %s" % num_problems
-    return num_problems
 
 
     
@@ -251,13 +185,13 @@ def design_insertion_primer_pair( site, sequence, consider_tm_diff ):
         rev_candidate = reverse_complement( sequence[site -1 -length:site -1] )
 
         #print "length %s, fwd_candidate is %s, rev_candidate is %s" %(length, fwd_candidate, rev_candidate)
-        num_fwd_problems = num_primer_problems( fwd_candidate )
+        num_fwd_problems = num_primer_problems( fwd_candidate, MIN_Tm, MAX_NON_PROBLEMATIC_TM )
         if(  num_fwd_problems < 10 ):
             fwd_options.append( [fwd_candidate, num_fwd_problems ] )
             if num_fwd_problems == 0:
                 good_fwd_found = 1
 
-        num_rev_problems = num_primer_problems( rev_candidate )
+        num_rev_problems = num_primer_problems( rev_candidate, MIN_Tm, MAX_NON_PROBLEMATIC_TM )
         if(  num_rev_problems < 10 ):
             rev_options.append( [rev_candidate, num_rev_problems] )
             if num_rev_problems == 0:
@@ -333,23 +267,6 @@ def create_insertion_site_list( first_nt, last_nt, num_primers):
 
     return insertion_site_list
 
-def read_insertion_site_list( filename ):
-
-    to_return = [];
-
-    filename = filename.replace("\n","")
-    fileh = open(filename, 'r')
-    filelines = fileh.readlines()
-    fileh.close()
-
-    for line in filelines:
-        line_items = line.split();
-        for litem in line_items:
-            this_pos = int( litem)
-            if CONVERT_SITE_LIST == 1:
-                this_pos = 3 * this_pos + 382
-            to_return.append( this_pos )
-    return to_return
     
 
 #function that'll make sure no insertion sites are between two hydrophobic residues
@@ -512,7 +429,7 @@ if position_file_name == '':
     if consider_hydrophobicity == 1:
         insertion_site_list = modify_insertion_site_list_according_to_hydrophobicity( insertion_site_list, sequence )
 else:
-    insertion_site_list = read_insertion_site_list( position_file_name )
+    insertion_site_list = read_insertion_site_list( position_file_name, CONVERT_SITE_LIST )
     print "Read the following positions from disk:"
     print insertion_site_list
         
