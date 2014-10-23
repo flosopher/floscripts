@@ -33,7 +33,7 @@ def design_lili_primer( sequence, site, orientation ):
     options = []
     length = MIN_P_LENGTH
 
-    best_p = ["",100]
+    best_p = ["",100, 0]
 
     while length <= MAX_P_LENGTH:
         candidate = ""
@@ -49,18 +49,33 @@ def design_lili_primer( sequence, site, orientation ):
 
         tot_problems = num_raw_problems  + tm_dev_problems
         #print "Candidate %s for site %s has tm of %.2f, %s raw and %s tm_dev_problems" % (candidate, site, this_tm, num_raw_problems, tm_dev_problems)
-
-        if tot_problems == 0:
-            return (candidate, 0)
-
+        
         if tot_problems < best_p[1]:
             best_p[0] = candidate
             best_p[1] = tot_problems
+            best_p[2] = this_tm
 
+        if tot_problems == 0:
+            break
         length = length + 1
 
-        #print "returning %s for site %s with tm of %.2f and %s total problems" % (best_p[0], site, PrimerTMCalculator.TM_Calculator().calculate_tm( best_p[0] ), best_p[1] )
+        #print "returning %s (length %s) for site %s with tm of %.2f and %s total problems" % (best_p[0], len(best_p[0]),  site, best_p[2] , best_p[1] )
     return best_p
+
+
+#we're interested in average lengths and TM diff distribution
+def calculate_statistics( primers ):
+    lengths = []
+    melt_temps = []
+
+    for primer in primers:
+        lengths.append( len( primer[0] ) )
+        melt_temps.append( primer[2] )
+
+    len_hist = generate_histogram( lengths, 1.0)
+    tm_hist = generate_histogram( melt_temps, 2.5)
+
+    return "Length distribution:\n" + len_hist + "\nTm distribution:\n" + tm_hist
 
 
 
@@ -100,12 +115,25 @@ fwd_primers = []
 rev_primers = []
 
 #design primers
-for pos in fwd_list:
-    fwd_primers.append( design_lili_primer( sequence, pos, 1 ) )
+for fpos in fwd_list:
+    fwd_primers.append( design_lili_primer( sequence, fpos, 1 ) )
 
-for pos in rev_list:
-    rev_primers.append( design_lili_primer( sequence, pos, -1 ) )
+for rpos in rev_list:
+    rev_primers.append( design_lili_primer( sequence, rpos, -1 ) )
 
 #now let's do some statistics
+stat_string = calculate_statistics( fwd_primers + rev_primers )
+
+outstring = "\n" + stat_string
+outstring = outstring + "\nfwd_primers:\n"
+
+for i in range (len( fwd_primers )):
+    outstring = outstring + "Site %s: %s, len=%s, tm=%.2f, num_probs=%s \n" % (fwd_list[i], fwd_primers[i][0], len(fwd_primers[i][0]), fwd_primers[i][2], fwd_primers[i][1] )
+
+outstring = outstring + "\nrev_primers:\n"
+for i in range (len( rev_primers )):
+    outstring = outstring + "Site %s: %s, len=%s, tm=%.2f, num_probs=%s \n" % (rev_list[i], rev_primers[i][0], len(rev_primers[i][0]), rev_primers[i][2], rev_primers[i][1] )
+    
+print outstring
 
     
