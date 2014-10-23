@@ -11,6 +11,7 @@ from primer_design_utils import reverse_complement, generate_histogram, num_prim
 
 #script to read in a DNA sequence, first and last nucleotide between which to design primers,
 #number of primers to design, and then automatically design those primers
+#Florian Richter, Moeglich Lab, feb 2014 florian.richter.1@hu-berlin.de, 
 
 MIN_Tm = 55.0 #the minimum annealing temp for designed primers
 MAX_NON_PROBLEMATIC_TM = 69

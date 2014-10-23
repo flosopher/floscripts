@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+#note: converting serial cloner gb files to mac format
+#in vi: %s/^M/\r/g
+
 import sys
 import re
 
