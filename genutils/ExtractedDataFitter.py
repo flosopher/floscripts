@@ -15,6 +15,7 @@ import sys
 excel_file_name = ''
 cellspec_file = ''
 fit_function = 1
+relevant_sheet = 0
 
 GASCONST = 0.0019872 #kcal/mol
 
@@ -58,12 +59,14 @@ for arg in CommandArgs:
         cellspec_file = CommandArgs[CommandArgs.index(arg)+1]
     elif arg == '-fitfunc':
         fit_function = int( CommandArgs[CommandArgs.index(arg)+1] )
+    elif arg == '-sheet':
+        relevant_sheet = int( CommandArgs[CommandArgs.index(arg)+1] ) - 1
 
 if( excel_file_name == '' or cellspec_file == '' ):
     print "Need to specify an excel file with -xl and and a cellspec file with -cells"
     sys.exit()
 
-excel_sheet = ExtractedDataFromExcel( excel_file_name, cellspec_file)
+excel_sheet = ExtractedDataFromExcel( excel_file_name, cellspec_file, relevant_sheet)
 
 num_series_to_fit = excel_sheet.num_extracted_series()
 
