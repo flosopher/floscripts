@@ -69,6 +69,33 @@ def generate_histogram( list, increment ):
 def num_primer_problems( sequence, min_tm, max_noproblem_tm ):
     #print "checking problems of sequence %s" % sequence
     tm = PrimerTMCalculator.TM_Calculator().calculate_tm( sequence )
+
+
+#function to generate a histogram from a list of values
+#returns a string for now
+def generate_histogram( list, increment ):
+    returnstring = ''
+    list.sort()
+    low_val = list[0]
+    cur_bin = (int( low_val / 1 ) ) * 1.0
+    cur_bin_count = 0
+
+    for i in list:
+        #print "i is %s and cur_bin is %s"%(i, cur_bin)
+        if (i - cur_bin ) <=increment:    #used to be if (i % cur_bin ) <=increment
+            cur_bin_count = cur_bin_count + 1
+        else:
+            returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, cur_bin_count)
+            cur_bin = float( cur_bin + increment )
+            #print "maap setting curbin to %.2f" % cur_bin
+            while (i - cur_bin ) >= increment:
+                returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, 0)
+                cur_bin = float( cur_bin + increment )
+                #print "moop setting curbin to %.2f" % cur_bin
+                
+            cur_bin_count = 1
+    returnstring = returnstring + "%s-%s: %s\n"%(cur_bin, cur_bin + increment, cur_bin_count)
+
     if tm < min_tm:
         #print "tm is %.2f, returning 10" %tm
         return 10

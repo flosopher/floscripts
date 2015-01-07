@@ -20,9 +20,9 @@ MIN_P_LENGTH = 16
 DESIRED_TM = 60.0 #desired 
 TM_DIFF_PROBLEMATIC_INCREMENT = 2.5
 
-ADD_LINKERS = 0
-FWD_LINKER = ""
-REV_LINKER = ""
+ADD_LINKERS = 1
+FWD_LINKER = "CCGGTACTGGCGGGTCGACT"
+REV_LINKER = "GATCCACCTGCTGCTGCTGC"
 
 #workhose function, scans through the sequence
 #at site from min to max length, records problems
@@ -127,12 +127,18 @@ stat_string = calculate_statistics( fwd_primers + rev_primers )
 outstring = "\n" + stat_string
 outstring = outstring + "\nfwd_primers:\n"
 
+if ADD_LINKERS == 1:
+    for fprimer in fwd_primers:
+        fprimer[0] = FWD_LINKER + fprimer[0]
+    for rprimer in rev_primers:
+        rprimer[0] = REV_LINKER + rprimer[0]
+
 for i in range (len( fwd_primers )):
-    outstring = outstring + "Site %s: %s, len=%s, tm=%.2f, num_probs=%s \n" % (fwd_list[i], fwd_primers[i][0], len(fwd_primers[i][0]), fwd_primers[i][2], fwd_primers[i][1] )
+    outstring = outstring + "flib1_%s_fwd: %s, len=%s, tm=%.2f, num_probs=%s \n" % (fwd_list[i], fwd_primers[i][0], len(fwd_primers[i][0]), fwd_primers[i][2], fwd_primers[i][1] )
 
 outstring = outstring + "\nrev_primers:\n"
 for i in range (len( rev_primers )):
-    outstring = outstring + "Site %s: %s, len=%s, tm=%.2f, num_probs=%s \n" % (rev_list[i], rev_primers[i][0], len(rev_primers[i][0]), rev_primers[i][2], rev_primers[i][1] )
+    outstring = outstring + "flib1_%s_rev: %s, len=%s, tm=%.2f, num_probs=%s \n" % (rev_list[i], rev_primers[i][0], len(rev_primers[i][0]), rev_primers[i][2], rev_primers[i][1] )
     
 print outstring
 

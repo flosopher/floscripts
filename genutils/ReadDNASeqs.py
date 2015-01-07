@@ -2,6 +2,10 @@
 
 #note: converting serial cloner gb files to mac format
 #in vi: %s/^M/\r/g
+#see
+#http://stackoverflow.com/questions/64749/m-character-at-end-of-lines
+#http://stackoverflow.com/questions/71323/how-to-replace-a-character-for-a-newline-in-vim
+#
 
 import sys
 import re
