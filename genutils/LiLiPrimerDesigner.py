@@ -47,8 +47,8 @@ def design_lili_primer( sequence, site, orientation ):
 
         tm_dev_problems = int( abs( DESIRED_TM - this_tm ) / TM_DIFF_PROBLEMATIC_INCREMENT )
 
-        tot_problems = num_raw_problems  + tm_dev_problems
         #print "Candidate %s for site %s has tm of %.2f, %s raw and %s tm_dev_problems" % (candidate, site, this_tm, num_raw_problems, tm_dev_problems)
+        tot_problems = num_raw_problems  + tm_dev_problems
         
         if tot_problems < best_p[1]:
             best_p[0] = candidate
