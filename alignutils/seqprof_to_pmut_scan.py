@@ -23,8 +23,10 @@ def usage():
 
 
 
+pdb_chain = 'A'
+filename = 'seqprof_hel_interface_relevant.txt'
 
-filename = 'cas9_al_ines_onlyseq.txt'
+outlines = []
 
 infile = open( filename, 'r')
 
@@ -32,42 +34,31 @@ flines = infile.readlines()
 
 infile.close()
 
+for line in flines:
 
-outlines = []
-seq_length = len( flines[0] )
-
-active_chars = [] #list of bools to keep track of the positions that are dashes in the first sequence
-cur_outstring = ''
-
-for i in range( seq_length ):
-    if flines[0][i] == '-':
-        active_chars.append( 0 )
-    else:
-        cur_outstring = cur_outstring + flines[0][i]
-        active_chars.append( 1 )
-
-outlines.append( cur_outstring )
-cur_outstring = ''
-
-seq_counter = 1
-while seq_counter < len( flines ):
-    cur_length = len( flines[seq_counter] )
-    if cur_length != seq_length:
-        print "Error. Sequence %s has unequal number of characters, ignoring." % seq_counter + 1
+    line_items = line.split()
+    if len(line_items) < 2:
         continue
-    for i in range( seq_length ):
-        if active_chars[i] == 1:
-            cur_outstring = cur_outstring + flines[seq_counter][i]
+    #print line_items
 
-    outlines.append( cur_outstring )
-    cur_outstring = ''
+    wt_res = line_items[0][0:1]
+    resnum = line_items[0][1:]
+    resnum = resnum[:len(resnum)-1]
+    num_alternative_res = ( len(line_items) - 1) / 2
 
-    seq_counter = seq_counter + 1
+    #line formats for reference
+    #E142:  0.0360 E, 0.0360 G,  0.8865 -,  0.0079 L,   0.0077 Q,
+    # A E 142 L
+    for i in range( num_alternative_res ):
+        this_res = line_items[2*i + 2][0:1]
+        if (this_res != wt_res) and (this_res != '-'):
+            this_outline = pdb_chain + ' ' + wt_res + ' ' + resnum + ' ' + this_res
+            outlines.append( this_outline )
 
 
 outstring = ''
 for line in outlines:
-    outstring = outstring+line
+    outstring = outstring+line + '\n'
 
 print outstring
 
