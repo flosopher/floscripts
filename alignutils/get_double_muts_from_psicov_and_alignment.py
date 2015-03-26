@@ -79,6 +79,7 @@ relevant_pos_dict ={}
 relevant_pos_string = ''
 empty_dict = {}
 outfname = "double_muts_out.txt"
+min_sub_freq = 0.2 #minimum frequency that a mutated residue must occur in the other mutations subalignment
 
 CommandArgs = sys.argv[1:]
 
@@ -89,6 +90,8 @@ for arg in CommandArgs:
         psicov_file = CommandArgs[CommandArgs.index(arg)+1]
     elif arg == '-min_freq':
         min_freq = float( CommandArgs[CommandArgs.index(arg)+1] )
+    elif arg == '-min_sub_freq':
+        min_sub_freq = float( CommandArgs[CommandArgs.index(arg)+1] )
     elif arg == '-freq_factor':
         freq_factor = float( CommandArgs[CommandArgs.index(arg)+1] )
     elif arg == '-pos':
@@ -162,7 +165,7 @@ for psi_line in psicov_lines:
     alt2_subprofs = {}
     relevant_pos2_alternates = []
     for altres2 in pos2_alternates:
-        if altres2 == '-':
+        if (altres2 == '-') or (altres2 == pos2_wt):
                 continue
 
         alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
@@ -178,7 +181,7 @@ for psi_line in psicov_lines:
 
         
     for altres1 in pos1_alternates:
-        if altres1 == '-':
+        if (altres1 == '-') or (altres1 == pos1_wt):
             continue
 
         alt1freq = all_seq_prof.get_frequency_for_res_at_position( seqpos1, altres1 )
@@ -208,6 +211,9 @@ for psi_line in psicov_lines:
 
             sub2wt_freq_wt1 = wt2_subprofile.get_frequency_for_res_at_position( seqpos1, pos1_wt )
             sub2mut_freq_mut1 = alt2_subprofs[altres2].get_frequency_for_res_at_position( seqpos1, altres1)
+
+            if (sub1mut_freq_mut2 < min_sub_freq ) or ( sub2mut_freq_mut1 < min_sub_freq):
+                continue
 
             if (sub1mut_freq_mut2 > (sub1wt_freq_wt2 * freq_factor) ) and (sub2mut_freq_mut1  > (sub2wt_freq_wt1  * freq_factor) ):
 
