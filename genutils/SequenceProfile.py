@@ -226,3 +226,27 @@ class SequenceProfile:
 
         return pymutstring
 
+#creates a sequence profile containing only sequences
+#that contain mut_aa at mut_position
+def create_subprofile( mut_position, mut_aa, alignment ):
+    #print "Creating subprofile of sequences containing %s at %s " % (mut_aa, mut_position)
+    empty_dict = {}
+    first_seq = -1
+    al_length = len( alignment )
+    for i in range( al_length):
+        if alignment[i][mut_position] == mut_aa:
+            first_seq = i
+            break
+    if first_seq == -1:
+        print "Error, %s was not observed in alignment at %s " % (mut_aa, mut_position)
+        sys.exit()
+
+    to_return = SequenceProfile( empty_dict, 1, alignment[first_seq] )
+    seq_counter = first_seq+1
+
+    while seq_counter < al_length:
+        if alignment[seq_counter][mut_position] == mut_aa:
+            to_return.add_sequence( alignment[seq_counter] )
+        seq_counter = seq_counter + 1
+    print "Creating subprofile of %s sequences containing %s at %s " % ( to_return.num_sequences, mut_aa, mut_position+1)
+    return to_return
