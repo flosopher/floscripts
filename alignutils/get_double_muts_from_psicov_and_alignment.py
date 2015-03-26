@@ -39,24 +39,33 @@ go through psicov file line by line.
 #can write its own output string
 class DoubleMutant:
 
-    def __init__(self, pos1, pos2, wtres1, wtres2, mutres1, mutres2, wtfreq1, wtfreq2, allfreq_mut1, allfreq_mut2, freq1_sub2, freq2_sub1 ):
+    def __init__(self, pos1, pos2, wtres1, wtres2, mutres1, mutres2, all_freq_wt1, all_freq_wt2, all_freq_mut1, all_freq_mut2, sub1wt_freq_wt2, sub1mut_freq_mut2, sub2wt_freq_wt1, sub2mut_freq_mut1 ):
 
         self.pos1 = pos1
         self.pos2 = pos2
+
         self.wtres1 = wtres1
         self.wtres2 = wtres2
+
         self.mutres1 = mutres1
         self.mutres2 = mutres2
-        self.wtfreq1 = wtfreq1
-        self.wtfreq2 = wtfreq2
-        self.allfreq_mut1 = allfreq_mut1
-        self.allfreg_mut2 = allfreq_mut2 
-        self.freq1_sub2 = freq1_sub2
-        self.freq2_sub1 = freq2_sub1
+
+        self.all_freq_wt1 = all_freq_wt1
+        self.all_freq_wt2 = all_freq_wt2
+
+        self.all_freq_mut1 = all_freq_mut1
+        self.all_freq_mut2 = all_freq_mut2 
+
+        self.sub1wt_freq_wt2 = sub1wt_freq_wt2
+        self.sub1mut_freq_mut2 = sub1mut_freq_mut2
+
+        self.sub2wt_freq_wt1 = sub2wt_freq_wt1
+        self.sub2mut_freq_mut1 = sub2mut_freq_mut1
 
     def write_output_string( self ):
         outstring = "DoubleMutant " + self.wtres1 + str(self.pos1) + self.mutres1 + "," + self.wtres2 + str(self.pos2) + self.mutres2
-        outstring = outstring + "wt1_freq=%.3f, mut1_freq=%.3f, wt2_freq=%.3f, mut2_freq=%.3f, freq1_sub2=%.3f, freq2_sub1=%.3f \n" % ( self.wtfreq1, self.allfreq_mut1, self.wtfreq2, self.allfreq_mut2, self.freq1_sub2, self.freq2_sub1 )
+
+        outstring = outstring + "\nwt1_freq=%.3f, mut1_freq=%.3f, wt2_freq=%.3f, mut2_freq=%.3f, sub1wt_freq_wt2=%.3f, sub1mut_freq_mut2=%.3f, sub2wt_freq_wt1=%.3f, sub2mut_freq_mut1=%.3f \n\n" % ( self.all_freq_wt1, self.all_freq_mut1, self.all_freq_wt2, self.all_freq_mut2, self.sub1wt_freq_wt2, self.sub1mut_freq_mut2, self.sub2wt_freq_wt1, self.sub2mut_freq_mut1  )
 
         return outstring
 
@@ -73,7 +82,7 @@ CommandArgs = sys.argv[1:]
 for arg in CommandArgs:
     if arg == '-a':
         alignfile = CommandArgs[CommandArgs.index(arg)+1]
-    elif arg == '-psi_out:'
+    elif arg == '-psi_out':
         psicov_file = CommandArgs[CommandArgs.index(arg)+1]
     elif arg == '-min_freq':
         min_freq = float( CommandArgs[CommandArgs.index(arg)+1] )
@@ -105,16 +114,21 @@ psicov_handle.close()
 double_mutants = []
 
 for psi_line in psicov_lines:
-    seqpos1 = int( psi_line[0] )
-    seqpos2 = int( psi_line[1] )
+    line_items = psi_line.split()
+    seqpos1 = int( line_items[0] ) -1
+    seqpos2 = int( line_items[1] ) -1
+
+    print "checking line %s with seqpos1 %s and seqpos2 %s" % (psi_line, seqpos1, seqpos2)
+    #print psi_line
 
     if seqpos2 < seqpos1:   #make sure ordering is correct
         seqpos1 = seqpos2
-        seqpos2 = psi_line[0]
+        seqpos2 = int( psi_line[0] )
 
     pos1_alternates = all_seq_prof.get_observed_res_for_position( seqpos1 )
     pos2_alternates = all_seq_prof.get_observed_res_for_position( seqpos2 )
-    if (len( pos1_alternates ) < 2) or ( len( pos2_alternates ) ):
+    #print pos1_alternates
+    if (len( pos1_alternates ) < 2) or ( len( pos2_alternates ) < 2):
         continue
 
     pos1_wt = all_seq_prof.get_wt_res( seqpos1 )
@@ -123,31 +137,60 @@ for psi_line in psicov_lines:
     wtfreq1 = all_seq_prof.get_frequency_for_res_at_position( seqpos1, pos1_wt)
     wtfreq2 = all_seq_prof.get_frequency_for_res_at_position( seqpos2, pos2_wt)
 
+    wt1_subprofile = create_subprofile( seqpos1, pos1_wt, alf_lines )
+    wt2_subprofile = create_subprofile( seqpos2, pos2_wt, alf_lines )
+
+    print pos1_alternates
+
     for altres1 in pos1_alternates:
-        alt1freq = all_seq_prof.get_frequency_for_res_at_position( seqpos1, altres1 )
- 
-       if wtfreq1 * min_freq > alt1freq : #make sure altres1 is observed at all
+        if altres1 == '-':
             continue
 
-       alt1_subprofile = create_subprofile( seqpos1-1, altres1, alf_lines )
+        alt1freq = all_seq_prof.get_frequency_for_res_at_position( seqpos1, altres1 )
+ 
+        if wtfreq1 * min_freq > alt1freq : #make sure altres1 is observed at all
+            continue
 
-       for altres2 in pos2_alternates:
-           alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
+        print "res1 %s at pos %s has freq %.3f, checking ..." % (altres1, seqpos1, alt1freq )
 
-           if wtfreq2 * min_freq > alt2freq : #make sure altres2 is observed at all
-               continue
+        #wt1_subprofile = create_subprofile( seqpos1, pos1_wt, alf_lines )
+        alt1_subprofile = create_subprofile( seqpos1, altres1, alf_lines )
 
-           alt2_subprofile = create_subprofile( seqpos2-1, altres2, alf_lines )
+        for altres2 in pos2_alternates:
+            if altres2 == '-':
+                continue
+
+            alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
+
+            if wtfreq2 * min_freq > alt2freq : #make sure altres2 is observed at all
+                continue
+
+            print "res2 %s at pos %s has freq %.3f, checking ..." % (altres2, seqpos2, alt2freq )
+
+            #for orientation
+            #self.sub1wt_freq_wt2 = sub1wt_freq_wt2
+            #self.sub1mut_freq_mut2 = sub1mut_freq_mut2
+
+            #self.sub2wt_freq_wt1 = sub2wt_freq_wt1
+            #self.sub2mut_freq_mut1 = sub2mut_freq_mut1
+
+            #wt2_subprofile = create_subprofile( seqpos2, pos2_wt, alf_lines )
+            alt2_subprofile = create_subprofile( seqpos2, altres2, alf_lines )
 
 
-           #now the decision whether altres1 and altres2 
-           #could be a good double mutant
-           alt1freq_sub2 = alt2_subprofile.get_frequency_for_res_at_position( seqpos1, altres1 )
-           alt2freq_sub1 = alt1_subprofile.get_frequency_for_res_at_position( seqpos2, altres2 )
+            #now the decision whether altres1 and altres2 
+            #could be a good double mutant
+            sub1wt_freq_wt2 = wt1_subprofile.get_frequency_for_res_at_position( seqpos2, pos2_wt )
+            sub1mut_freq_mut2 = alt1_subprofile.get_frequency_for_res_at_position( seqpos2, altres2)
 
-           if (alt1freq_sub2 > (alt1freq * freq_factor) ) and  (alt2freq_sub1 > (alt2freq * freq_factor) ):
+            sub2wt_freq_wt1 = wt2_subprofile.get_frequency_for_res_at_position( seqpos1, pos1_wt )
+            sub2mut_freq_mut1 = alt2_subprofile.get_frequency_for_res_at_position( seqpos1, altres1)
 
-               double_mutants.append( DoubleMutant( seqpos1, seqpos2, pos1_wt, pos2_wt, altres1, altres2, wtfreq1, wtfreq2, alt1freq, alt2freq, freq1_sub2, freq2_sub1 ) )
+            if (sub1mut_freq_mut2 > (sub1wt_freq_wt2 * freq_factor) ) and (sub2mut_freq_mut1  > (sub2wt_freq_wt1  * freq_factor) ):
+
+                print "creating double mutant!"
+
+                double_mutants.append( DoubleMutant( seqpos1 +1, seqpos2+1, pos1_wt, pos2_wt, altres1, altres2, wtfreq1, wtfreq2, alt1freq, alt2freq, sub1wt_freq_wt2, sub1mut_freq_mut2, sub2wt_freq_wt1,  sub2mut_freq_mut1 ) )
 
 
 outstring = "A total of %s potential double mutants:\n" % len( double_mutants )

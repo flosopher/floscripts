@@ -190,11 +190,12 @@ class SequenceProfile:
 
         freq = 0.000
         if not self.mutations.has_key( pos ):
-            if res == self.wt_pos[pos]:
+            if residue == self.wt_pos[pos]:
                 freq = 1.0000
 
         else:
             if self.mutations[pos].has_key( residue ):
+                #print "HUACK checking res %s at seqpos %s, %s out of %s sequences have it." % (residue, pos, self.mutations[ pos ][residue], self.num_sequences)
                 freq = float(self.mutations[ pos ][residue]) / float( self.num_sequences )
 
         return freq
