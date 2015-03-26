@@ -186,7 +186,19 @@ class SequenceProfile:
 
         return to_return
     
-    
+    def get_frequency_for_res_at_position( self, pos, residue):
+
+        freq = 0.000
+        if not self.mutations.has_key( pos ):
+            if res == self.wt_pos[pos]:
+                freq = 1.0000
+
+        else:
+            if self.mutations[pos].has_key( residue ):
+                freq = float(self.mutations[ pos ][residue]) / float( self.num_sequences )
+
+        return freq
+
 
     def get_outstring( self ):
 
