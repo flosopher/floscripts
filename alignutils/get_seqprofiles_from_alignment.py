@@ -4,7 +4,7 @@ import sys
 import re
 import math
 
-sys.path.insert(0,'../genutils/')
+sys.path.insert(0,'/Users/flo/floscripts/genutils/')
 from SequenceProfile import SequenceProfile
 
 
