@@ -75,7 +75,10 @@ alignfile = ''
 psicov_file = ''
 min_freq = 0.2 #this is in terms of wildtype
 freq_factor = 1.5
+relevant_pos_dict ={}
+relevant_pos_string = ''
 empty_dict = {}
+outfname = "double_muts_out.txt"
 
 CommandArgs = sys.argv[1:]
 
@@ -87,7 +90,9 @@ for arg in CommandArgs:
     elif arg == '-min_freq':
         min_freq = float( CommandArgs[CommandArgs.index(arg)+1] )
     elif arg == '-freq_factor':
-        freq_factor = float( CommandArgs[CommandArgs.index(arg)+1] ) 
+        freq_factor = float( CommandArgs[CommandArgs.index(arg)+1] )
+    elif arg == '-pos':
+        relevant_pos_string = CommandArgs[CommandArgs.index(arg)+1]
 
 
 if alignfile == '':
@@ -97,6 +102,11 @@ if alignfile == '':
 if psicov_file == '':
     print "Error: need to specify psicov out file with option -psi_out"
     sys.exit()
+
+if(relevant_pos_string != ''):
+    poslist = relevant_pos_string.split(',')
+    for position in poslist:
+        relevant_pos_dict[ int( position) ] = 1 #dummy, just needs key
 
 # get sequence profile
 alf_handle = open(alignfile, 'r')
@@ -117,6 +127,12 @@ for psi_line in psicov_lines:
     line_items = psi_line.split()
     seqpos1 = int( line_items[0] ) -1
     seqpos2 = int( line_items[1] ) -1
+
+    if relevant_pos_string != '':
+        if not relevant_pos_dict.has_key( seqpos1 + 1 ):
+            continue
+        if not relevant_pos_dict.has_key( seqpos2 + 1 ):
+            continue
 
     #print psi_line
 
@@ -140,7 +156,7 @@ for psi_line in psicov_lines:
     wt1_subprofile = create_subprofile( seqpos1, pos1_wt, alf_lines )
     wt2_subprofile = create_subprofile( seqpos2, pos2_wt, alf_lines )
 
-    print pos1_alternates
+    #print pos1_alternates
 
     #we create the subprofiles for residue2 here to get better performance
     alt2_subprofs = {}
@@ -170,7 +186,7 @@ for psi_line in psicov_lines:
         if wtfreq1 * min_freq > alt1freq : #make sure altres1 is observed at all
             continue
 
-        print "res1 %s at pos %s has freq %.3f, checking ..." % (altres1, seqpos1+1, alt1freq )
+        #print "res1 %s at pos %s has freq %.3f, checking ..." % (altres1, seqpos1+1, alt1freq )
 
         #wt1_subprofile = create_subprofile( seqpos1, pos1_wt, alf_lines )
         alt1_subprofile = create_subprofile( seqpos1, altres1, alf_lines )
@@ -179,7 +195,7 @@ for psi_line in psicov_lines:
 
             alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
 
-            print "res2 %s at pos %s has freq %.3f, checking ..." % (altres2, seqpos2+1, alt2freq )
+            #print "res2 %s at pos %s has freq %.3f, checking ..." % (altres2, seqpos2+1, alt2freq )
 
             #wt2_subprofile = create_subprofile( seqpos2, pos2_wt, alf_lines )
             #alt2_subprofile = create_subprofile( seqpos2, altres2, alf_lines )
@@ -204,4 +220,11 @@ outstring = "A total of %s potential double mutants:\n" % len( double_mutants )
 for doubles in double_mutants:
     outstring = outstring + doubles.write_output_string()
 
-print outstring
+if len(double_mutants) > 0:
+    outf = open( outfname, 'w')
+    outf.write( outstring )
+    outf.close()
+
+else:
+    print "No double mutants found."
+#print outstring
