@@ -118,7 +118,6 @@ for psi_line in psicov_lines:
     seqpos1 = int( line_items[0] ) -1
     seqpos2 = int( line_items[1] ) -1
 
-    print "checking line %s with seqpos1 %s and seqpos2 %s" % (psi_line, seqpos1, seqpos2)
     #print psi_line
 
     if seqpos2 < seqpos1:   #make sure ordering is correct
@@ -133,6 +132,7 @@ for psi_line in psicov_lines:
 
     pos1_wt = all_seq_prof.get_wt_res( seqpos1 )
     pos2_wt = all_seq_prof.get_wt_res( seqpos2 )
+    print "checking line %s with seqpos1 %s (%s) and seqpos2 %s (%s)" % (psi_line, seqpos1+1,pos1_wt, seqpos2+1, pos2_wt)
 
     wtfreq1 = all_seq_prof.get_frequency_for_res_at_position( seqpos1, pos1_wt)
     wtfreq2 = all_seq_prof.get_frequency_for_res_at_position( seqpos2, pos2_wt)
@@ -142,6 +142,25 @@ for psi_line in psicov_lines:
 
     print pos1_alternates
 
+    #we create the subprofiles for residue2 here to get better performance
+    alt2_subprofs = {}
+    relevant_pos2_alternates = []
+    for altres2 in pos2_alternates:
+        if altres2 == '-':
+                continue
+
+        alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
+
+        if wtfreq2 * min_freq > alt2freq : #make sure altres2 is observed at all
+                continue
+
+        relevant_pos2_alternates.append( altres2 )
+        alt2_subprofs[altres2] = create_subprofile( seqpos2, altres2, alf_lines )
+
+    if len(relevant_pos2_alternates) < 2:
+        continue
+
+        
     for altres1 in pos1_alternates:
         if altres1 == '-':
             continue
@@ -151,31 +170,19 @@ for psi_line in psicov_lines:
         if wtfreq1 * min_freq > alt1freq : #make sure altres1 is observed at all
             continue
 
-        print "res1 %s at pos %s has freq %.3f, checking ..." % (altres1, seqpos1, alt1freq )
+        print "res1 %s at pos %s has freq %.3f, checking ..." % (altres1, seqpos1+1, alt1freq )
 
         #wt1_subprofile = create_subprofile( seqpos1, pos1_wt, alf_lines )
         alt1_subprofile = create_subprofile( seqpos1, altres1, alf_lines )
 
-        for altres2 in pos2_alternates:
-            if altres2 == '-':
-                continue
+        for altres2 in relevant_pos2_alternates:
 
             alt2freq = all_seq_prof.get_frequency_for_res_at_position( seqpos2, altres2 )
 
-            if wtfreq2 * min_freq > alt2freq : #make sure altres2 is observed at all
-                continue
-
-            print "res2 %s at pos %s has freq %.3f, checking ..." % (altres2, seqpos2, alt2freq )
-
-            #for orientation
-            #self.sub1wt_freq_wt2 = sub1wt_freq_wt2
-            #self.sub1mut_freq_mut2 = sub1mut_freq_mut2
-
-            #self.sub2wt_freq_wt1 = sub2wt_freq_wt1
-            #self.sub2mut_freq_mut1 = sub2mut_freq_mut1
+            print "res2 %s at pos %s has freq %.3f, checking ..." % (altres2, seqpos2+1, alt2freq )
 
             #wt2_subprofile = create_subprofile( seqpos2, pos2_wt, alf_lines )
-            alt2_subprofile = create_subprofile( seqpos2, altres2, alf_lines )
+            #alt2_subprofile = create_subprofile( seqpos2, altres2, alf_lines )
 
 
             #now the decision whether altres1 and altres2 
@@ -184,7 +191,7 @@ for psi_line in psicov_lines:
             sub1mut_freq_mut2 = alt1_subprofile.get_frequency_for_res_at_position( seqpos2, altres2)
 
             sub2wt_freq_wt1 = wt2_subprofile.get_frequency_for_res_at_position( seqpos1, pos1_wt )
-            sub2mut_freq_mut1 = alt2_subprofile.get_frequency_for_res_at_position( seqpos1, altres1)
+            sub2mut_freq_mut1 = alt2_subprofs[altres2].get_frequency_for_res_at_position( seqpos1, altres1)
 
             if (sub1mut_freq_mut2 > (sub1wt_freq_wt2 * freq_factor) ) and (sub2mut_freq_mut1  > (sub2wt_freq_wt1  * freq_factor) ):
 
