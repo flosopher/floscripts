@@ -21,7 +21,7 @@ and then create double mutants out of all single mutants that are within cutoff
 mutfile = ''
 pdbfile = ''
 cutoff_sq = 100.0
-num_files_to_write = 4
+num_files_to_write = 1
 
 def get_ca_ca_dist_sq( res1, res2):
     res1ca = res1['CA']

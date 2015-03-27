@@ -24,7 +24,7 @@ def usage():
 
 
 pdb_chain = 'A'
-filename = 'seqprof_hel_interface_relevant.txt'
+filename = 'seqprof_hel_interface_minal.txt'
 
 outlines = []
 
