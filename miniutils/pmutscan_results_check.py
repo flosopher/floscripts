@@ -32,7 +32,7 @@ def usage():
 #filename = 'seqprof_hel_interface_minal.txt'
 
 smutfname = 'singlemuts_out.txt'
-dmutfname = 'doublemuts_out.txt'
+dmutfname = 'doublemuts_out_new.txt'
 
 #put some commandline arguments in here
 
@@ -94,7 +94,7 @@ for dline in dmut_lines:
 
         if ( check_singles_sum == 1) and single_mutants.has_key( smut1 ):
             singles_sum = single_mutants[ smut1 ] + single_mutants[ smut2 ]
-            if singles_sum < muts_dg:
+            if singles_sum < (muts_dg + 0.2  ):
                 print "Single mutants %s and %s have a dG sum of %.2f + %.2f = %.2f, but double mutant only has dG of %.2f, discarding double." % (smut1, smut2, single_mutants[ smut1 ], single_mutants[ smut2 ], singles_sum, muts_dg )
                 continue
 
